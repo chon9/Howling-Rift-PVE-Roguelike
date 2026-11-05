@@ -5,6 +5,7 @@ func check(value: bool, message: String) -> void:
  checks += 1
  if not value: failures += 1; push_error(message)
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  await get_tree().process_frame
  Progression.persistent = false
  var game = load("res://scripts/Main.gd").new()
@@ -16,6 +17,7 @@ func _ready() -> void:
  for c in GameState.champions:
   c.is_bot = false
   c.stop_actions()
+  c.mayhem = {}
  var p = GameState.player
  p.global_position = Vector2(1650,270)
  var enemy = GameState.champions[3]

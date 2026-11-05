@@ -191,7 +191,8 @@ func _test_priority() -> void:
 	check(Picker3D.hit_score("minion", true, 10.0, 30.0) < Picker3D.hit_score("champion", false, 0.0, 0.0), "an exact minion hit beats any padded champion hit")
 	check(Picker3D.hit_score("champion", false, 10.0, 40.0) < Picker3D.hit_score("minion", false, 6.0, 40.0), "padded near-tie (within 6 px) goes to the champion")
 	check(Picker3D.hit_score("champion", false, 20.0, 40.0) > Picker3D.hit_score("minion", false, 6.0, 40.0), "padded minion clearly nearer (> 6 px) still wins")
-	check(is_equal_approx(Picker3D.hit_score("champion", true, 12.0, 9.0), Picker3D.hit_score("minion", true, 12.0, 9.0)), "exact hits are scored by distance only")
+	check(Picker3D.hit_score("champion", true, 30.0, 30.0) < Picker3D.hit_score("minion", true, 1.0, 1.0), "a hero under the cursor beats a minion under the cursor")
+	check(is_equal_approx(Picker3D.hit_score("minion", true, 12.0, 9.0), Picker3D.hit_score("structure", true, 12.0, 9.0)), "exact hits are scored by distance only")
 	check(is_equal_approx(Picker3D.hit_score("structure", false, 5.0, 5.0), Picker3D.hit_score("champion", false, 5.0, 5.0)), "the bias only applies to minions")
 
 	# Geometry: an enemy hero and a red minion whose padding bands overlap in a small gap.

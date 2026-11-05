@@ -25,6 +25,15 @@ var auto_type: String
 var move_speed: float
 var size: float = Constants.CHAMP_RADIUS + 4
 var _blocked_time: float = 0.0
+var route := PackedVector2Array()
+var route_goal := Vector2.ZERO
+var route_at: float = -100.0
+var veer_side: float = 1.0
+var veer_until: float = 0.0
+var _idle_scan: float = 0.0
+var hero_damage_dealt: float = 0.0
+var base_armor: float = 0.0
+var hero_damage_taken: float = 0.0
 
 var level: int = 1
 var xp: float = 0.0
@@ -131,6 +140,9 @@ var _last_pos: Vector2 = Vector2.ZERO
 var manual_move: Vector2 = Vector2.ZERO
 var hit_flash: float = 0.0
 var run_bonus: Dictionary = {}
+var mayhem: Dictionary = {}
+var mayhem_state: Dictionary = {}
+var visual_scale: float = 1.0
 var consumable_bonus: Dictionary = {}
 var consumable_counts: Dictionary = {}
 var dive_target = null
@@ -394,9 +406,15 @@ func _draw_ground_3d() -> void:
 	draw_circle(Vector2.ZERO, 21*gs, Color(0, 0, 0, 0.22))
 	draw_arc(Vector2.ZERO, 24*gs, 0, TAU, 32, Color(tc.r, tc.g, tc.b, 0.9), 2.5, true)
 	draw_arc(Vector2.ZERO, 22*gs, 0, TAU, 32, Color(tc.r, tc.g, tc.b, 0.4), 1.0, true)
-	if not is_bot:
-		var g_pulse = 0.9 + 0.1 * sin(tnow * 2.0)
-		draw_arc(Vector2.ZERO, 28*gs, 0, TAU, 32, Color(1.0, 0.86, 0.33, g_pulse), 2.5, true)
+	if self == GameState.player:
+		# Your own hero is the one thing on the field that is never hard to find.
+		var g_pulse = 0.5 + 0.5 * sin(tnow * 4.0)
+		draw_circle(Vector2.ZERO, 30*gs, Color(0.45, 1.0, 0.4, 0.13 + 0.05 * g_pulse))
+		draw_arc(Vector2.ZERO, 31*gs, 0, TAU, 48, Color(0.0, 0.0, 0.0, 0.55), 7.0, true)
+		draw_arc(Vector2.ZERO, 31*gs, 0, TAU, 48, Color(0.5, 1.0, 0.42), 4.5, true)
+		draw_arc(Vector2.ZERO, (35 + 4 * g_pulse)*gs, 0, TAU, 48, Color(0.5, 1.0, 0.42, 0.55 - 0.35 * g_pulse), 2.0, true)
+	elif not is_bot:
+		draw_arc(Vector2.ZERO, 28*gs, 0, TAU, 32, Color(1.0, 0.86, 0.33, 0.9), 2.5, true)
 	if hero_key == "yasuo" and buffs.has("tempest") and buffs.tempest.stacks == 2:
 		draw_arc(Vector2.ZERO, 33, -PI, PI, 48, Color("c4efed"), 2, true)
 		for i in range(3):
@@ -472,11 +490,13 @@ func _recompute_stats() -> void:
 	var lv_ = level - 1
 	var prev_hp = hp_max
 	var prev_mp = mp_max
-	hp_max = hero["hp"] + hero["hp_per_lv"] * lv_ + bonus_hp
+	var frame := RoleFrames.frame(hero_key)
+	hp_max = (hero["hp"] + hero["hp_per_lv"] * lv_) * Constants.HERO_HP_MULT * float(frame.hp) + bonus_hp
+	base_armor = float(frame.armor) + float(frame.armor_lv) * lv_
 	hp_max *= difficulty_stats.get("health", 1.0)
 	if buffs.has("dominion"):hp_max+=buffs.dominion.health
 	mp_max = 200. if hero_key in ["leesin","zed"] else 0. if hero["mp"]<=0 else hero["mp"] + hero["mp_per_lv"] * lv_ + bonus_mp
-	base_mr = hero.get("mr", 35.0 if auto_type == "melee" else 30.0) + 1.25 * lv_
+	base_mr = hero.get("mr", 35.0 if auto_type == "melee" else 30.0) + 1.25 * lv_ + float(frame.mr) + float(frame.mr_lv) * lv_
 	ad = hero["ad"] + hero["ad_per_lv"] * lv_ + bonus_ad
 	hp_regen = hero["hp_regen"] + hero["hp_regen_per_lv"] * lv_ + bonus_hp_regen
 	mp_regen = 10. if hero_key in ["leesin","zed"] else (hero["mp_regen"] + hero["mp_regen_per_lv"] * lv_) * 1.25 + bonus_mp_regen
@@ -671,7 +691,7 @@ func _bot_spend_points() -> void:
 func grant_xp(amount: float) -> void:
 	if dead or level>=Constants.MAX_LEVEL or not is_finite(amount) or amount<=0:return
 	var multiplier=difficulty_stats.get("experience",1.) if is_bot and team==Constants.RED and not GameState.is_pvp() else 1.
-	xp += amount*multiplier
+	xp += amount*multiplier*Comeback.xp_multiplier(team)
 	while level < Constants.MAX_LEVEL and xp >= Constants.xp_to_level(level):
 		xp -= Constants.xp_to_level(level)
 		level += 1
@@ -694,7 +714,7 @@ func grant_xp(amount: float) -> void:
 
 # ============== Buffs helpers ==============
 func effective_move_speed() -> float:
-	var m = move_speed * SupportCombat.move_multiplier(self) * (1.0 + bonus_ms) * difficulty_stats.get("speed", 1.0)
+	var m = (move_speed + RoleFrames.speed_bonus(self)) * SupportCombat.move_multiplier(self) * (1.0 + bonus_ms) * difficulty_stats.get("speed", 1.0)
 	if buffs.has("haste"): m *= buffs["haste"]["mult"]
 	if buffs.has("ghost"): m *= buffs.ghost.mult
 	if inventory.has("force_nature") and buffs.has("nature_guard"): m *= 1.08
@@ -766,11 +786,19 @@ func try_cast_skill(idx: int, pt: Vector2) -> bool:
 	skill_cds[idx] = effective_cd(sk["cd"])
 	if hero_key=="syndra" and idx==0 and passive_state.get("splinters",0)>=40:skill_cds[0]=0. if passive_state.get("q_charges",0)>0 else passive_state.q_recharge
 	if idx==3 and passive_state.get("reset_r",false):skill_cds[3]=0.;passive_state.erase("reset_r")
+	Mayhem.on_cast(self,idx)
 	if recall_time >= 0: recall_time = -1.0
 	if not (hero_key=="caitlyn" and idx==3):
 		get_tree().call_group("game_main", "play_sfx", "ultimate" if idx == 3 else "spell", self)
 	if hero_key != "yasuo" and not ExpansionRoster.KEYS.has(hero_key) and not hero_key in RosterExpansion12.KEYS and not hero_key in SupportRoster.KEYS: get_tree().call_group("game_main", "spawn_spell_burst", self, global_position, 45.0 if idx != 3 else 70.0)
 	return true
+
+## Direction of the next walking step: along the route to goal, curving around any minion in the way.
+func walk_heading(goal: Vector2, ignore = null) -> Vector2:
+	var to := HeroPath.next_waypoint(self, goal) - global_position
+	if to.length_squared() < 0.01:
+		to = goal - global_position
+	return UnitCollision.veer(self, to.normalized(), ignore)
 
 func _dispatch_cast(cast_id: String, pt: Vector2) -> bool:
 	if hero_key in SupportRoster.KEYS: return SupportKits.cast(self,cast_id,pt)
@@ -977,6 +1005,8 @@ func update_frame(delta: float) -> void:
 	hit_flash = max(0.0, hit_flash - delta)
 
 	ForcedMotion.tick(self,delta)
+	Mayhem.tick(self,delta)
+	if dead:return
 	ExpansionKits.tick(self,delta)
 	ExpansionCombat.tick(self,delta)
 	SupportKits.tick(self,delta)
@@ -1099,6 +1129,12 @@ func update_frame(delta: float) -> void:
 
 	# Combat behaviour: acquire before moving, then approach the edge of attack range.
 	var steering = manual_move.length_squared() > 0.01
+	# An idle hero fights back by itself, as in every MOBA. Bots have their own logic.
+	if GameState.idle_attack and not is_bot and not steering and not has_move_target and not attack_move and attack_target == null and queued_auto_target == null and not is_dashing:
+		_idle_scan -= delta
+		if _idle_scan <= 0.0:
+			_idle_scan = 0.15
+			attack_target = GameState.find_idle_target(self)
 	if attack_move and attack_target == null:
 		attack_target = GameState.find_nearest_enemy(self,global_position,effective_attack_range()+30) if is_bot else GameState.find_attack_move_target(self,attack_move_destination)
 	if is_bot and attack_target != null and not BotSafety.can_enter(self,BotSafety.approach(self,attack_target),attack_target.kind == "champion"):
@@ -1135,8 +1171,7 @@ func update_frame(delta: float) -> void:
 		if d < 3:
 			has_move_target = false
 		else:
-			var way = UnitCollision.steer(self, move_target, UnitCollision.HERO_RADIUS, attack_target) - global_position
-			facing = way.normalized() if way.length_squared() > 0.01 else dir / d
+			facing = walk_heading(move_target, attack_target)
 			var step = effective_move_speed() * delta
 			global_position += facing * min(step, d)
 
@@ -1149,9 +1184,9 @@ func update_frame(delta: float) -> void:
 
 	# Movement dust: emit a puff every so often while actually moving
 	var moved = global_position.distance_squared_to(_last_pos)
-	# Walled in by a crowd: give up on the order instead of walking on the spot.
+	# Truly unreachable: give up on the order instead of walking on the spot.
 	_blocked_time = _blocked_time + delta if has_move_target and attack_target == null and moved < 0.04 else 0.0
-	if _blocked_time > 0.6:
+	if _blocked_time > 1.5:
 		has_move_target = false
 		_blocked_time = 0.0
 	_dust_cooldown -= delta

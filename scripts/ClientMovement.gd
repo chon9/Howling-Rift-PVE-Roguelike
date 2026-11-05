@@ -7,7 +7,13 @@ static func clear() -> void:sequence=0;commands.clear()
 static func order(c,data: Dictionary) -> Dictionary:
  sequence=maxi(sequence,c.last_order_sequence)+1
  var result=data.duplicate();result.sequence=sequence
- var target=GameState.find_target_at(data.point,c.team,8) if data.type=="smart" else GameState.find_attack_move_target(c,data.point,true)
+ var target=null
+ if data.has("target"):
+  # The host gets the kind of unit that was clicked; a node cannot cross the network.
+  target=data.target;result.erase("target")
+  result.target_kind=target.kind if target!=null else ""
+  if target!=null:result.point=target.world_pos()
+ else:target=GameState.find_target_at(data.point,c.team,8) if data.type=="smart" else GameState.find_attack_move_target(c,data.point,true)
  commands.append({"sequence":sequence,"point":GameState.clamp_walkable(data.point),"target":target})
  if commands.size()>64:commands.pop_front()
  if target!=c.attack_target:c.cancel_auto()
@@ -28,8 +34,8 @@ static func tick(c,delta: float,server_target: Vector2) -> bool:
  if c.queued_auto_target!=null or (c.anim_action=="attack" and not c.anim_released and commands.is_empty()):return false
  var offset=point-c.world_pos()
  if offset.length()>2.:
-  offset=UnitCollision.steer(c,point,UnitCollision.HERO_RADIUS,c.attack_target)-c.world_pos()
-  c.facing=offset.normalized();c.global_position=GameState.clamp_walkable(c.world_pos()+offset.limit_length(c.effective_move_speed()*minf(delta,.1)))
+  c.facing=c.walk_heading(point,c.attack_target)
+  c.global_position=GameState.clamp_walkable(c.world_pos()+c.facing*minf(offset.length(),c.effective_move_speed()*minf(delta,.1)))
   UnitCollision.resolve_champion(c)
  # Don't pull against a newer local order before the host acknowledges it.
  if commands.is_empty():

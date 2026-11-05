@@ -11,6 +11,8 @@ enum Pick { ENEMY, ALLY, ANY }
 
 const BODY_GROW_PX := 6.0        # projected body rect growth (canvas px)
 const PAD_PX := 12.0             # padded (inexact) hit margin; about 8 sim px at the 2D zoom of 1.7
+const HERO_PAD_PX := 20.0        # heroes are easier to click than anything else
+const HERO_PRIORITY := 500.0     # a hero under the cursor beats a minion or building under the cursor
 const PAD_PENALTY := 1000.0      # exact hits always beat padded ones
 const FEET_RADIUS := 0.7         # feet circle radius as a fraction of unit.size (as target_click_rect)
 const FEET_SEGMENTS := 12
@@ -74,8 +76,17 @@ func world_to_screen(p: Vector2, h_art_px := 0.0) -> Vector2:
 	return p
 
 
-## Best unit under the screen point (canvas px), or null. team is the picking player's team.
+## Best unit under the screen point (canvas px), or null. team is the picking player's team. ANY means an enemy when
+## one is there, so an ally standing in front never takes a click meant for the enemy behind it. Holding Alt ignores
+## heroes, for last-hitting a minion that stands next to one.
 func pick_unit(screen: Vector2, team: int, mode: int) -> Node2D:
+	if mode == Pick.ANY:
+		var enemy := _pick(screen, team, Pick.ENEMY)
+		return enemy if enemy != null else _pick(screen, team, Pick.ALLY)
+	return _pick(screen, team, mode)
+
+
+func _pick(screen: Vector2, team: int, mode: int) -> Node2D:
 	var cam := _camera()
 	if cam == null:
 		return null
@@ -83,7 +94,10 @@ func pick_unit(screen: Vector2, team: int, mode: int) -> Node2D:
 	var best_score := INF
 	var view_inv := cam.global_transform.affine_inverse()
 	var focal := cam.get_viewport().get_visible_rect().size.y * 0.5 / tan(deg_to_rad(cam.fov) * 0.5)
+	var no_heroes := mode == Pick.ENEMY and Input.is_key_pressed(KEY_ALT)
 	for lst in [GameState.champions, GameState.minions, GameState.structures]:
+		if no_heroes and lst == GameState.champions:
+			continue
 		for u in lst:
 			if u == null or not is_instance_valid(u) or not u.is_inside_tree():
 				continue
@@ -98,7 +112,7 @@ func pick_unit(screen: Vector2, team: int, mode: int) -> Node2D:
 			if info.is_empty():
 				continue
 			var rect: Rect2 = info.rect
-			if not rect.grow(PAD_PX).has_point(screen):
+			if not rect.grow(HERO_PAD_PX if u.kind == "champion" else PAD_PX).has_point(screen):
 				continue
 			var score := hit_score(u.kind, rect.has_point(screen), screen.distance_to(info.feet), screen.distance_to(info.centre))
 			if score < best_score:
@@ -116,15 +130,15 @@ func _surely_misses(cam: Camera3D, view_inv: Transform3D, focal: float, u, scree
 	var v := view_inv * feet3
 	var z := -v.z
 	var kind: String = u.kind
-	var scale := ViewConfig.MINION_SCALE if kind == "minion" else (ViewConfig.STRUCTURE_SCALE if kind == "structure" else ViewConfig.UNIT_SCALE)
+	var scale := ViewConfig.MINION_SCALE if kind == "minion" else (ViewConfig.STRUCTURE_SCALE if kind == "structure" else ViewConfig.UNIT_SCALE * float(u.visual_scale))
 	var ext := _art_extent(u)
 	var lift := 0.0 if kind == "structure" or not u.buffs.has("airborne") else HeroControl.lift(u)
 	var reach := ViewMath.art_m(ext * 1.4143 + absf(lift), scale) + float(u.size) * FEET_RADIUS * ViewConfig.S
 	if z - reach <= 0.05:
 		return false
 	var k := focal * reach / (z - reach)
-	var bound_x := k * (1.0 + absf(v.x / z)) + BODY_GROW_PX + PAD_PX + 1.0
-	var bound_y := k * (1.0 + absf(v.y / z)) + BODY_GROW_PX + PAD_PX + 1.0
+	var bound_x := k * (1.0 + absf(v.x / z)) + BODY_GROW_PX + HERO_PAD_PX + 1.0
+	var bound_y := k * (1.0 + absf(v.y / z)) + BODY_GROW_PX + HERO_PAD_PX + 1.0
 	var feet_s := cam.unproject_position(feet3)
 	return absf(screen.x - feet_s.x) > bound_x or absf(screen.y - feet_s.y) > bound_y
 
@@ -161,9 +175,12 @@ static func _body_rect_facing(u, flip: bool) -> Rect2:
 
 
 ## Selection score (lower wins): distance to the nearer of feet and body centre. Padded hits add PAD_PENALTY so
-## any exact hit wins; among padded hits a minion adds MINION_PAD_BIAS_PX so a champion wins a near-tie.
+## any exact hit wins, and a hero exactly under the cursor beats everything else there. Among padded hits a minion adds
+## MINION_PAD_BIAS_PX so a champion wins a near-tie.
 static func hit_score(kind: String, exact: bool, feet_dist: float, centre_dist: float) -> float:
 	var score := minf(feet_dist, centre_dist)
+	if exact and kind == "champion":
+		score -= HERO_PRIORITY
 	if not exact:
 		score += PAD_PENALTY
 		if kind == "minion":
@@ -302,6 +319,8 @@ func unit_screen_info(cam: Camera3D, u) -> Dictionary:
 	else:
 		body = body_rect_of(u)
 		lift = HeroControl.lift(u)
+		if u.kind == "champion":
+			scale *= float(u.visual_scale)
 	var base := feet3 + up * ViewMath.art_m(lift, scale)
 	var rect := Rect2()
 	var first := true

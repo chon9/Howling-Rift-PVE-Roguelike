@@ -125,9 +125,9 @@ func _test_hero_keeps_out_of_minion() -> void:
 		worst = minf(worst, hero.global_position.distance_to(m.global_position) - limit)
 		if not hero.has_move_target:
 			break
-	check(worst > -0.5, "hero does not walk through a minion (%.1f px)" % worst)
+	check(worst > -6.0, "hero curves around a minion instead of walking through it (%.1f px)" % worst)
 	check(hero.global_position.distance_to(Vector2(1350, 270)) < 6.0, "hero walks around the minion to its order")
-	# A hero that cannot reach its order gives up instead of walking on the spot.
+	# A crowd never stops a hero: it keeps its order and comes out the other side.
 	hero.stop_actions()
 	hero.global_position = Vector2(1300 - limit, 270)
 	var wall := [m]
@@ -140,7 +140,9 @@ func _test_hero_keeps_out_of_minion() -> void:
 	hero.has_move_target = true
 	for i in range(240):
 		hero.update_frame(STEP)
-	check(not hero.has_move_target, "hero blocked by a crowd stops trying")
+		for w in wall:
+			UnitCollision.resolve_minion(w)
+	check(hero.global_position.distance_to(Vector2(1300, 270)) < 6.0, "hero reaches an order inside a crowd")
 	for w in wall:
 		_remove(w)
 	hero.stop_actions()
@@ -178,5 +180,7 @@ func _test_landing_and_ghost() -> void:
 	check(hero.global_position == Vector2(1300, 270), "Ghost walks through minions")
 	hero.buffs.erase("ghost")
 	UnitCollision.resolve_champion(hero)
-	check(hero.global_position.distance_to(m.global_position) >= UnitCollision.contact_distance(hero, m) - 0.01, "without Ghost the hero is pushed out")
+	check(hero.global_position == Vector2(1300, 270), "a minion never pushes a hero")
+	UnitCollision.resolve_minion(m)
+	check(hero.global_position.distance_to(m.global_position) >= UnitCollision.contact_distance(hero, m) - 0.01, "the minion steps out of the hero's way")
 	_remove(m)

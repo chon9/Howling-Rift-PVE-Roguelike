@@ -7,7 +7,7 @@ static func is_magic(src,kind: String) -> bool:
 static func resist(target,src,kind: String) -> float:
  var magic=is_magic(src,kind)
  var armor=target.bonus_mr+target.base_mr if magic and target.kind=="champion" else target.bonus_armor if "bonus_armor" in target else 0.
- if target.kind=="champion":armor+=target.difficulty_stats.get("magic_resist" if magic else "armor",0.)
+ if target.kind=="champion":armor+=target.difficulty_stats.get("magic_resist" if magic else "armor",0.)+(0. if magic else target.base_armor)
  if target.kind=="champion" and target.inventory.has("jaksho") and target.buffs.has("item_combat") and GameState.time-target.buffs.item_combat.since>=3.:armor+=20.
  if not magic and "buffs" in target and target.buffs.has("armor_shred"):armor*=1.-target.buffs.armor_shred.stacks*.05
  if is_instance_valid(src) and src.kind=="champion":

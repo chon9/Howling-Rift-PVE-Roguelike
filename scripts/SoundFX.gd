@@ -54,6 +54,7 @@ func play(event: String, actor = null) -> void:
 	if important: next_priority_voice = (next_priority_voice + 1) % 4
 	else: next_voice = (next_voice + 1) % 8
 	voice.stream = clips[key]
+	voice.pitch_scale = 1.0 if important else randf_range(0.93, 1.07)
 	var mix = -25 if event == "minion_impact" else -15 if event in ["attack","impact","hurt"] else (-9 if event in ["ultimate","deadeye_fire"] else -14)
 	if event != "minion_impact" and is_instance_valid(actor) and actor.kind == "minion": mix -= 5
 	voice.set_meta("mix_volume",mix)

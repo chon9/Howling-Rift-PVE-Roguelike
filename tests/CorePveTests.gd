@@ -6,6 +6,7 @@ func check(value: bool, message: String) -> void:
  checks += 1
  if not value: failures += 1; push_error("FAIL CORE PVE: "+message)
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  await get_tree().process_frame
  Progression.persistent=false;Progression.levels.clear();Progression.difficulty=1
  GameState.reset()

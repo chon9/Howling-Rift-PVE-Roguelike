@@ -1,6 +1,6 @@
 class_name LanSnapshot
 extends RefCounted
-const CHAMP_FIELDS = ["hp_regen","mp_regen","last_order_sequence","bonus_heal_power","bonus_mp_regen","is_dashing","roster_active","level","xp","gold","cs","hp","hp_max","mp","mp_max","shield","dead","respawn_at","is_targetable","kills","deaths","assists","skill_ranks","skill_cds","skill_points","level_bonus","comeback_gold_awarded","last_comeback_gold","summoner_cds","summoner_spells","inventory","run_bonus","consumable_bonus","consumable_counts","permanent_bonus","difficulty_stats","ad","atk_range","auto_type","bonus_ad","bonus_ap","bonus_hp","bonus_mp","bonus_as","bonus_ms","bonus_cdr","bonus_lifesteal","bonus_armor","bonus_mr","base_mr","bonus_armor_pen","bonus_magic_pen","bonus_lethality","bonus_reflect","bonus_hp_regen","bonus_crit","bonus_crit_damage","stun","recall_time","brush_revealed_until","vision_teams","passive_state","has_move_target","move_target","facing","attack_pulse","item_cds","attack_move","attack_move_destination","owner_peer","is_bot","char_name","auto_windup","anim_action","anim_elapsed","anim_duration","anim_windup","anim_released","anim_serial","anim_from","anim_to"]
+const CHAMP_FIELDS = ["base_armor","visual_scale","hp_regen","mp_regen","last_order_sequence","bonus_heal_power","bonus_mp_regen","is_dashing","roster_active","level","xp","gold","cs","hp","hp_max","mp","mp_max","shield","dead","respawn_at","is_targetable","kills","deaths","assists","skill_ranks","skill_cds","skill_points","level_bonus","comeback_gold_awarded","last_comeback_gold","summoner_cds","summoner_spells","inventory","run_bonus","consumable_bonus","consumable_counts","permanent_bonus","difficulty_stats","ad","atk_range","auto_type","bonus_ad","bonus_ap","bonus_hp","bonus_mp","bonus_as","bonus_ms","bonus_cdr","bonus_lifesteal","bonus_armor","bonus_mr","base_mr","bonus_armor_pen","bonus_magic_pen","bonus_lethality","bonus_reflect","bonus_hp_regen","bonus_crit","bonus_crit_damage","stun","recall_time","brush_revealed_until","vision_teams","passive_state","has_move_target","move_target","facing","attack_pulse","item_cds","attack_move","attack_move_destination","owner_peer","is_bot","char_name","auto_windup","anim_action","anim_elapsed","anim_duration","anim_windup","anim_released","anim_serial","anim_from","anim_to"]
 static func clean_buffs(buffs: Dictionary) -> Dictionary:
  var result = {}
  for key in buffs:
@@ -78,6 +78,7 @@ static func apply(packet: Dictionary, session) -> void:
  else: ui.hide_death_overlay()
  if packet.has("draft"):
   var draft = session.main.lane_augments
+  draft.set_mayhem_choices(packet.draft.get("mayhem",[]))
   var changed = draft.pending != packet.draft.pending or draft.choices != packet.draft.choices
   draft.pending = packet.draft.pending.duplicate()
   draft.choices = packet.draft.choices.duplicate()

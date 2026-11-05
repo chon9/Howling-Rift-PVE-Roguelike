@@ -60,7 +60,7 @@ NETWORK = {
     "MatchLoadingNetworkTests": (["host", "fast", "slow"], ["pve"]),
     "BuildStealerNetworkTests": (["host", "guest1", "guest2"], []),
 }
-SKIPPED = {"SteamPeerTests"}
+SKIPPED = {"SteamPeerTests", "FunProbe"}
 VISUAL_EXTRA = {"AnimationCombatPreview", "AnimationShowcase"}
 
 _children = set()

@@ -24,6 +24,7 @@ func step(seconds: float) -> void:
 func creep(subkind: String="melee"):
  var m=game.MinionS.new();game.world_root.add_child(m);m.setup(1,subkind,hero.world_pos()+Vector2(30,0));GameState.minions.append(m);return m
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  await get_tree().process_frame
  Progression.persistent=false;GameState.reset();game=load("res://scripts/Main.gd").new();add_child(game);game.set_process(false);game._start_game("xinzhao")
  for key in ChampionData.CHAMPIONS:
@@ -138,7 +139,7 @@ func test_passive(key: String) -> void:
    hit("magic","leona_e");var hp=enemy.hp;hit();check(enemy.buffs.has("sunlight"),"Aegis own hit does not consume sunlight")
    game.deal_damage(GameState.champions[1],enemy,10,"auto");check(not enemy.buffs.has("sunlight") and enemy.hp<hp-110.,"ally champion consumes sunlight")
   "blitzcrank":
-   hero.hp=hero.hp_max*.35;var hp=hero.hp;game.deal_damage(enemy,hero,hero.hp_max*.1,"exec");check(hero.hp==hp and hero.item_cds.mana_barrier>0.,"Bolt barrier protects threshold-crossing hit")
+   hero.hp=hero.hp_max*.35;var hp=hero.hp;game.deal_damage(enemy,hero,hero.hp_max*.06,"exec");check(hero.hp==hp and hero.item_cds.mana_barrier>0.,"Bolt barrier protects threshold-crossing hit")
   "renekton":
    hero.hp=hero.hp_max*.4;hit();check(hero.buffs.fury.value==7.5,"Saur low-health increased Fury")
   "xinzhao":

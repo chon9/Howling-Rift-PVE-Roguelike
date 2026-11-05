@@ -4,7 +4,7 @@ signal changed
 signal friends_changed
 const APP_ID = 480
 const GAME_KEY = "howling-rift-aram"
-const PROTOCOL = "13"
+const PROTOCOL = "14"
 const REQUEST_TIMEOUT = 25.0
 var api = null
 var available = false

@@ -32,6 +32,7 @@ func _process(_delta: float) -> void:
   if phase<9:check(is_equal_approx(caster.buffs.audit_shield.shield,200. if phase==7 else 150.),"remaining timed shield replicated "+str(phase))
   else:check(not caster.buffs.has("audit_shield"),"expired shield removed while unrelated shield stays")
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  role=OS.get_cmdline_user_args()[0];Progression.persistent=false;GameState.reset();game=load("res://scripts/Main.gd").new();add_child(game)
  var key="xinzhao" if role=="host" else "veigar" if role=="client1" else "ezreal"
  if role=="host":

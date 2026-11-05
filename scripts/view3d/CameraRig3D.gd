@@ -100,6 +100,11 @@ func follow(focus_sim: Vector2, shake_sim: Vector2, zoom2d: float, delta: float)
 
 
 ## Mouse wheel: positive notches zoom out (farther), negative zoom in, clamped to the preset's range.
+## A short push toward the action on big moments; the zoom spring eases it back.
+func kick(metres: float) -> void:
+	_zoom_dist -= metres
+
+
 func wheel(notches: float) -> void:
 	_zoom_target = clampf(_zoom_target + notches * ViewConfig.ZOOM_STEP_M, float(_preset.zoom_min), float(_preset.zoom_max))
 

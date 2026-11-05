@@ -20,6 +20,7 @@ func prepare(ours: Array=[],theirs: Array=[]) -> void:
  enemy.hp_max=10000.;enemy.hp=10000.;enemy.shield=0.;enemy.bonus_armor=0.;enemy.base_mr=0.;enemy.bonus_mr=0.;enemy.difficulty_stats=Progression.scaling(1)
  p.shield=0.;p.base_mr=0.;p.bonus_mr=0.;p.bonus_armor=0.
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  await get_tree().process_frame
  GameState.reset();Progression.persistent=false;Progression.difficulty=1;Progression.levels.clear()
  game=load("res://scripts/Main.gd").new();add_child(game);game.set_process(false);game.network_config={"blue":["garen","ashe","lux"],"red":["garen","ashe","lux"],"players":[{"peer":1,"slot":0,"name":"Test","spells":["flash","ignite"],"bonuses":{}}]};game._start_game("garen")

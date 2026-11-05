@@ -23,6 +23,7 @@ const OUTLINE_BIG := 8                 # ... for 22 px crit / big text (Floating
 const OUTLINE_COLOR := Color(0.02, 0.02, 0.04, 1.0)
 const SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.55)
 const SHADOW_OFFSET := Vector2i(1, 2)
+const POP_TIME := 0.16
 const HOLD := 0.6                      # share of the life at full opacity
 
 var source: Node2D
@@ -49,6 +50,10 @@ func _process(_delta: float) -> void:
 		_styled = label
 	if is_instance_valid(source) and "elapsed" in source and "life" in source:
 		label.modulate.a = alpha_at(float(source.elapsed) / maxf(float(source.life), 0.001))
+		# Numbers and callouts pop in, then settle at their normal size.
+		var pop := 1.0 + 0.55 * pow(maxf(0.0, 1.0 - float(source.elapsed) / POP_TIME), 2.0)
+		label.pivot_offset = label.size * 0.5
+		label.scale = Vector2(pop, pop)
 
 
 ## Seconds since the source text spawned (0 when unknown).

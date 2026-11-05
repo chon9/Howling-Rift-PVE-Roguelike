@@ -35,6 +35,7 @@ var attack_move_pending: bool = false
 # Presentation cursor (sim px). 2D: the canvas mouse; Rift3D: the ground pick. hover_unit is set by the 3D picker.
 var cursor_world: Vector2 = Vector2.ZERO
 var hover_unit = null
+var idle_attack: bool = false   # idle human heroes attack what comes into range (real matches, see Main._launch_game)
 
 func reset() -> void:
 	match_mode="pve";team_size=3;fill_bots=true
@@ -57,6 +58,7 @@ func reset() -> void:
 	cam_locked = true
 	attack_move_pending = false
 	hover_unit = null
+	idle_attack = false
 
 # Convenience filter helpers
 func enemies_of(team: int) -> Array:
@@ -89,6 +91,40 @@ func find_target_at(pos: Vector2, for_team: int, radius: float = 8.0):
 			if not bounds.has_point(pos): distance += 1000
 			if distance < best_d: best_d = distance; best = unit
 	return best
+
+## The unit of this kind nearest a point, for a click sent over the network. "" means the ground.
+func find_unit_of_kind(point: Vector2, for_team: int, kind: String, radius: float = 70.0):
+	var units: Array = {"champion": champions, "minion": minions, "structure": structures}.get(kind, [])
+	var best = null
+	var best_d := radius
+	for u in units:
+		if _attackable_by(u, for_team) and point.distance_to(u.world_pos()) < best_d:
+			best_d = point.distance_to(u.world_pos())
+			best = u
+	return best
+
+func _attackable_by(u, team: int) -> bool:
+	if not is_instance_valid(u) or u.dead or not u.is_targetable or u.team == team or not BrushVision.visible_to(u, team):
+		return false
+	if u.kind == "champion" and not u.roster_active:
+		return false
+	return u.kind != "structure" or u.is_structure_attackable()
+
+## What an idle hero attacks: the nearest enemy hero in range, else the nearest minion, else a building.
+func find_idle_target(src):
+	for units in [champions, minions, structures]:
+		var best = null
+		var best_d := INF
+		for u in units:
+			if not _attackable_by(u, src.team):
+				continue
+			var d: float = src.world_pos().distance_to(u.world_pos())
+			if d <= src.auto_attack_reach(u) and d < best_d:
+				best_d = d
+				best = u
+		if best != null:
+			return best
+	return null
 
 func find_nearest_enemy(src, origin: Vector2, radius: float):
 	var best = null

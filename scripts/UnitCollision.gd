@@ -1,9 +1,11 @@
 class_name UnitCollision
 extends RefCounted
 ## Walking collision for heroes and minions. Runs on the host sim and in guest movement prediction.
-## Buildings are solid circles under their painted bases. Heroes and minions keep out of each other, but minions
-## do not block minions and heroes do not block heroes. Dashes, blinks and forced motion pass through everything
-## and only land outside buildings (GameState.clamp_walkable). Ghost ignores units, as in LoL.
+## Buildings are solid circles under their painted bases, and heroes plan routes around them (HeroPath). Minions never
+## stop a hero: the hero curves around them (veer) and they step out of its way (resolve_minion), so units do not pass
+## through each other and nobody gets stuck. Minions do not block minions and heroes do not block heroes. Dashes, blinks
+## and forced motion pass through everything and only land outside buildings (GameState.clamp_walkable). Ghost ignores
+## units, as in LoL.
 
 const HERO_RADIUS := 14.0
 const MINION_RADIUS_K := 0.6       # of Minion.size
@@ -12,6 +14,9 @@ const STEER_MARGIN := 6.0          # walkers start turning this far before a bui
 const UNIT_MARGIN := 2.0
 const UNIT_LOOKAHEAD := 70.0       # only steer around units this close
 const BAND_SLACK := 8.0            # steering may graze the edge of the walkable band
+const VEER_LOOKAHEAD := 56.0       # a hero starts curving around a minion this far ahead
+const VEER_ANGLE := 0.75           # sharpest curve, radians
+const VEER_HOLD := 0.35            # seconds a hero keeps curving to the same side, so it never wobbles
 
 
 static func radius_of(unit) -> float:
@@ -27,7 +32,7 @@ static func contact_distance(a, b) -> float:
 
 
 static func _is_obstacle(u, mover) -> bool:
-	if not is_instance_valid(u) or u == mover or u.dead or not u.is_targetable or u.buffs.has("airborne"):
+	if not is_instance_valid(u) or u == mover or u.dead or not u.is_targetable or u.buffs.has("airborne") or u.buffs.has("ghost"):
 		return false
 	return u.kind != "champion" or u.roster_active
 
@@ -67,22 +72,48 @@ static func _push_out_of_units(point: Vector2, radius: float, units: Array, move
 	return point
 
 
-## Hero after a walking step: out of minions, then out of buildings (buildings always win).
+## Hero after a walking step: only buildings can stop a hero.
 static func resolve_champion(c) -> void:
-	var p: Vector2 = c.global_position
-	if not c.buffs.has("ghost"):
-		p = _push_out_of_units(p, HERO_RADIUS, GameState.minions, c)
-	c.global_position = push_out_of_structures(p, HERO_RADIUS)
+	c.global_position = push_out_of_structures(c.global_position, HERO_RADIUS)
 
 
-## Minion after a walking step: around heroes, then out of buildings.
+## The heading that curves a walking hero around the minion ahead of it. ignore is the unit it is attacking.
+static func veer(c, dir: Vector2, ignore = null) -> Vector2:
+	if c.buffs.has("ghost"):
+		return dir
+	var nearest := VEER_LOOKAHEAD
+	var ahead := Vector2.ZERO
+	var found := false
+	for m in GameState.minions:
+		if m == ignore or not _is_obstacle(m, c):
+			continue
+		var rel: Vector2 = m.global_position - c.global_position
+		var along := rel.dot(dir)
+		if along <= 0.0 or along >= nearest or absf(dir.cross(rel)) >= radius_of(m) + HERO_RADIUS:
+			continue
+		nearest = along
+		ahead = rel
+		found = true
+	var now: float = GameState.time
+	if not found:
+		return dir
+	if now >= c.veer_until or now < c.veer_until - VEER_HOLD:
+		c.veer_side = -1.0 if dir.cross(ahead) > 0.0 else 1.0
+		var pass_y: float = c.global_position.y + dir.rotated(c.veer_side * VEER_ANGLE).y * VEER_LOOKAHEAD
+		if absf(pass_y - Constants.LANE_Y) > Constants.LANE_HALF - 20.0:
+			c.veer_side = -c.veer_side
+	c.veer_until = now + VEER_HOLD
+	return dir.rotated(c.veer_side * VEER_ANGLE * (1.0 - 0.5 * nearest / VEER_LOOKAHEAD))
+
+
+## Minion after a walking step: out of the way of heroes, then out of buildings.
 static func resolve_minion(m) -> void:
 	var radius: float = radius_of(m)
 	var p: Vector2 = _push_out_of_units(m.global_position, radius, GameState.champions, m)
 	m.global_position = push_out_of_structures(p, radius)
 
 
-## Where to walk this step to reach target without running into something: target itself when the way is clear,
+## Where a minion walks this step to reach target without running into something: target itself when the way is clear,
 ## otherwise a point past the edge of the nearest blocker. ignore is the unit being attacked.
 static func steer(unit, target: Vector2, radius: float, ignore = null) -> Vector2:
 	var pos: Vector2 = unit.global_position
@@ -104,20 +135,18 @@ static func steer(unit, target: Vector2, radius: float, ignore = null) -> Vector
 			best = e
 			center = c
 			best_rr = rr
-	var hero: bool = unit.kind == "champion"
-	if not hero or not unit.buffs.has("ghost"):
-		for u in (GameState.minions if hero else GameState.champions):
-			if u == ignore or not _is_obstacle(u, unit):
-				continue
-			var c: Vector2 = u.global_position
-			if pos.distance_squared_to(c) > UNIT_LOOKAHEAD * UNIT_LOOKAHEAD:
-				continue
-			var rr := minf(radius_of(u) + radius + UNIT_MARGIN, target.distance_to(c))
-			var e := _entry(pos, dir, length, c, rr)
-			if e < best:
-				best = e
-				center = c
-				best_rr = rr
+	for u in GameState.champions:
+		if u == ignore or not _is_obstacle(u, unit):
+			continue
+		var c: Vector2 = u.global_position
+		if pos.distance_squared_to(c) > UNIT_LOOKAHEAD * UNIT_LOOKAHEAD:
+			continue
+		var rr := minf(radius_of(u) + radius + UNIT_MARGIN, target.distance_to(c))
+		var e := _entry(pos, dir, length, c, rr)
+		if e < best:
+			best = e
+			center = c
+			best_rr = rr
 	if best == INF:
 		return target
 	var rel := center - pos

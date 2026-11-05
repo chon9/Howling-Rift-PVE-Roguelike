@@ -20,6 +20,7 @@ func simulate(seconds: float) -> void:
   for p in GameState.projectiles.duplicate():if is_instance_valid(p) and not p.is_queued_for_deletion():p.update_frame(.02)
   for a in GameState.aoes.duplicate():if is_instance_valid(a) and not a.is_queued_for_deletion():a.update_frame(.02)
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  await get_tree().process_frame
  Progression.persistent=false;GameState.reset()
  game=load("res://scripts/Main.gd").new();add_child(game);game.set_process(false);game._start_game("leona")

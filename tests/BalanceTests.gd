@@ -7,6 +7,7 @@ func check(value: bool, message: String) -> void:
  checks += 1
  if not value: failures += 1; push_error("FAIL BALANCE: "+message)
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  await get_tree().process_frame
  GameState.reset();Progression.persistent=false;Progression.levels.clear();Progression.difficulty=1
  game=load("res://scripts/Main.gd").new();add_child(game);game.set_process(false)
@@ -52,7 +53,7 @@ func _ready() -> void:
    check(is_equal_approx(red.atk_dmg,game.StructureS.SPECS[type].dmg*Progression.scaling(stage).structure_damage),"tower damage uses N%d" % stage)
    red.queue_free();blue.queue_free()
   var c=game.ChampionS.new();game.world_root.add_child(c);c.setup(1,"malphite",true,"Tank")
-  check(is_equal_approx(c.hp_max,c.hero.hp*Progression.scaling(stage).health),"enemy HP scales at spawn")
+  check(is_equal_approx(c.hp_max,c.hero.hp*Constants.HERO_HP_MULT*Progression.scaling(stage).health),"enemy HP scales at spawn")
   check(ExpansionCombat.resist(c,null,"magic")>=42.+Progression.scaling(stage).magic_resist,"enemy MR scales at spawn")
   c.queue_free()
  GameState.difficulty=1

@@ -28,6 +28,7 @@ const DEFAULT_SAVE_PATH = "user://progression.cfg"
 const LEGACY_SAVE = "Godot/app_userdata/Howling Rift/progression.cfg" # Classic 2D profile, under OS.get_data_dir()
 var credits: int = 0
 var difficulty: int = 1
+var win_streak: int = 0
 var levels: Dictionary = {}
 var save_path: String = "user://progression.cfg"
 var persistent: bool = false
@@ -81,6 +82,7 @@ func load_profile() -> void:
 	if renderer not in RENDERERS: renderer = "gl_compatibility"
 	credits = clampi(int(file.get_value("profile", "credits", 0)), 0, 2000000000)
 	difficulty = clampi(int(file.get_value("profile", "difficulty", 1)), 1, 99)
+	win_streak = maxi(0, int(file.get_value("profile", "win_streak", 0)))
 	for key in UPGRADES: levels[key] = clampi(int(file.get_value("upgrades", key, 0)), 0, 99)
 	var saved_builds=file.get_value("build_stealer","records",[])
 	if saved_builds is Array:build_records=BuildStealer.ranked(saved_builds)
@@ -121,6 +123,7 @@ func save_profile() -> bool:
 	file.set_value("view","renderer",renderer)
 	file.set_value("profile", "credits", credits)
 	file.set_value("profile", "difficulty", difficulty)
+	file.set_value("profile", "win_streak", win_streak)
 	for key in UPGRADES: file.set_value("upgrades", key, int(levels.get(key, 0)))
 	file.set_value("profile","schema",3)
 	file.set_value("build_stealer","records",build_records)
@@ -185,10 +188,12 @@ func reward_preview(stage: int) -> String:
 
 func complete_match(won: bool, seconds: float, kills: int, stage: int, cs: int = 0) -> int:
 	if awarded: return last_reward
-	var previous={"credits":credits,"stash":gear_stash.duplicate(true),"daily":daily.duplicate(true),"next":next_gear_id}
+	var previous={"credits":credits,"stash":gear_stash.duplicate(true),"daily":daily.duplicate(true),"next":next_gear_id,"streak":win_streak}
 	awarded = true
 	# Both results pay; higher stages improve rewards. Time/kill bonuses are bounded.
-	last_reward = int(round((30 + (70 if won else 0) + clampi(int(seconds / 30), 0, 40) + clampi(kills, 0, 30) * 3) * reward_multiplier(stage)))
+	win_streak = win_streak + 1 if won else 0
+	var streak_bonus := 1.0 + 0.1 * mini(maxi(0, win_streak - 1), 5)
+	last_reward = int(round((30 + (70 if won else 0) + clampi(int(seconds / 30), 0, 40) + clampi(kills, 0, 30) * 3) * reward_multiplier(stage) * streak_bonus))
 	credits = mini(2000000000, credits + last_reward)
 	refresh_daily(false)
 	# A completed victory counts; defeats need two minutes of play to count for quests.
@@ -203,7 +208,7 @@ func complete_match(won: bool, seconds: float, kills: int, stage: int, cs: int =
 			if progress[quest.field]>=quest.goal and not daily.ready.has(key):daily.ready[key]=clampi(stage,1,99)
 		grant_ready_drops()
 	if not save_profile():
-		credits=previous.credits;gear_stash=previous.stash;daily=previous.daily;next_gear_id=previous.next
+		credits=previous.credits;gear_stash=previous.stash;daily=previous.daily;next_gear_id=previous.next;win_streak=previous.streak
 		last_reward=0;last_drops.clear();awarded=false
 	return last_reward
 

@@ -67,7 +67,7 @@ static func dive_viable(c, victim, point: Vector2 = Vector2.INF) -> bool:
   var exposure = kill_time+escape+0.5
   # Includes a missile already in flight and ramped shots, even with wave cover.
   var shots = maxi(4,int(ceil(exposure*tower.atk_spd))+1)
-  incoming += shots*tower.atk_dmg*1.5*100.0/(100.0+ExpansionCombat.resist(c,null,"auto"))
+  incoming += shots*tower.atk_dmg*Constants.tower_hero_damage_mult()*1.5*100.0/(100.0+ExpansionCombat.resist(c,null,"auto"))
  if towers==0: return true
  for enemy in GameState.champions:
   if enemy.dead or enemy.team==c.team or enemy.world_pos().distance_to(landing)>450: continue

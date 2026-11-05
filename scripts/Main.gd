@@ -34,6 +34,15 @@ var view3d: View3D = null
 var camera_shake_offset: Vector2 = Vector2.ZERO
 var pending_skill: int = -1
 var cam_shake_t: float = 0.0
+var _time_warp_id: int = 0
+var _hold_move: bool = false
+var _hold_timer: float = 0.0
+var _hold_point: Vector2 = Vector2.ZERO
+var _cast_buffer: Dictionary = {}
+const HOLD_REPEAT := 0.09
+const HOLD_MIN_MOVE := 6.0
+const CAST_BUFFER := 0.3
+var _rally_shown: bool = false
 var cam_shake_amp: float = 0.0
 var cam_shake_duration: float = 0.0
 var selected_hero: String = "ashe"
@@ -542,6 +551,7 @@ func _launch_game(hero_key: String) -> void:
 	var roster=_resolve_match_roster(hero_key)
 	if DisplayServer.get_name()=="headless" and not force_match_loading:
 		_start_game(hero_key,roster,not LanSession.loading_match)
+		GameState.idle_attack = true
 		if LanSession.active:LanSession.mark_match_loaded()
 		return
 	match_load_serial+=1
@@ -555,6 +565,7 @@ func _launch_game(hero_key: String) -> void:
 	if not await loader.prepare(roster.blue+roster.red):return
 	if serial!=match_load_serial or not is_instance_valid(loader):return
 	_start_game(hero_key,roster,false)
+	GameState.idle_attack = true
 	if view3d != null:
 		await view3d.warm_up()
 		if serial!=match_load_serial or not is_instance_valid(loader):return
@@ -633,6 +644,9 @@ func _build_match(player_hero: String,roster: Dictionary={},activate: bool=true)
 		c.skill_history.clear()
 		c.skill_points = 0
 		if c == GameState.player: c.summoner_spells = selected_summoners.duplicate()
+		# Health bar colours say who is who at a glance: you, your team, the enemy.
+		if is_instance_valid(GameState.player):
+			c.hp_bar.color = Constants.BAR_SELF if c == GameState.player else (Constants.BAR_ALLY if c.team == GameState.player.team else Constants.BAR_ENEMY)
 		c._recompute_stats()
 		c.hp = c.hp_max
 		c.mp = c.mp_max
@@ -656,6 +670,7 @@ func _build_match(player_hero: String,roster: Dictionary={},activate: bool=true)
 	lane_augments = load("res://scripts/LaneAugments.gd").new()
 	add_child(lane_augments)
 	lane_augments.setup(self)
+	lane_augments.start_match()
 
 	floating_text(GameState.player.global_position + Vector2(0, -60),
 		"Minions in 3s", Color(1.0, 0.86, 0.52), true)
@@ -707,18 +722,24 @@ func _unhandled_input(event: InputEvent) -> void:
 			if pending_skill >= 0:
 				_cancel_pending_skill()
 				return
-			_issue_player_order({"type":"smart", "point": pick_point(event.position, Picker3D.Pick.ANY)})
+			var clicked = click_target(event.position)
+			_issue_player_order({"type":"smart", "point": mouse_world, "target": clicked})
 			attack_move_pending = false
-			_spawn_target_marker(mouse_world)
+			# Holding the button keeps walking toward the cursor; a click on a unit stays on that unit.
+			_hold_move = clicked == null
+			_hold_timer = HOLD_REPEAT
+			_hold_point = mouse_world
+			_spawn_target_marker(clicked.world_pos() if clicked != null else mouse_world, clicked != null)
 		elif event.button_index == MOUSE_BUTTON_LEFT and pending_skill >= 0:
 			var idx = pending_skill
 			_cancel_pending_skill()
 			if is_instance_valid(GameState.player): GameState.player.try_cast_skill(idx, pick_point(event.position, Picker3D.Pick.ANY))
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_LEFT and attack_move_pending:
-			_issue_player_order({"type":"amove", "point": pick_point(event.position, Picker3D.Pick.ENEMY)})
+			var clicked = click_target(event.position)
+			_issue_player_order({"type":"amove", "point": mouse_world, "target": clicked})
 			attack_move_pending = false
-			_spawn_target_marker(mouse_world)
+			_spawn_target_marker(clicked.world_pos() if clicked != null else mouse_world, true)
 
 	if event is InputEventKey and event.pressed and not event.echo:
 		var p = GameState.player
@@ -758,6 +779,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_U:
 				_cancel_pending_skill()
 				lane_augments.toggle_panel()
+			KEY_1, KEY_2, KEY_3:
+				lane_augments.choose_mayhem(event.keycode - KEY_1)
 			KEY_SPACE:
 				GameState.cam_target = p.global_position
 				GameState.cam_locked = true
@@ -772,6 +795,13 @@ func screen_to_ground(screen: Vector2) -> Vector2:
 func world_to_screen(point: Vector2, height_px: float = 0.0) -> Vector2:
 	if view3d != null and view3d.is_active(): return view3d.world_to_screen(point, height_px)
 	return get_canvas_transform() * (point - Vector2(0, height_px))
+
+## The enemy a click at this screen point would attack, or null for the ground. This is the same unit the cursor and
+## the hover ring show, and an order carries it directly: a click on the ground can never turn into an attack.
+func click_target(screen: Vector2):
+	if GameState.player == null: return null
+	if view3d != null and view3d.is_active(): return view3d.picker.pick_unit(screen, GameState.player.team, Picker3D.Pick.ENEMY)
+	return GameState.find_target_at(screen_to_ground(screen), GameState.player.team, 8)
 
 func pick_point(screen: Vector2, mode: int) -> Vector2:
 	if view3d != null and view3d.is_active() and GameState.player != null:
@@ -805,7 +835,11 @@ func _issue_champion_order(p, order: Dictionary) -> void:
 	if order.type=="smart":
 		for zone in GameState.aoes:
 			if is_instance_valid(zone) and zone.try_lantern(p,order.point):return
-	if order.type == "smart": target = GameState.find_target_at(order.point,p.team,8)
+	if order.has("target"):
+		target = order.target
+		if target != null and not GameState._attackable_by(target, p.team): target = null
+		if target == null and order.type == "amove": target = GameState.find_attack_move_target(p,order.point)
+	elif order.type == "smart": target = GameState.find_target_at(order.point,p.team,8)
 	elif order.type == "amove":
 		target = GameState.find_attack_move_target(p,order.point,true)
 		if target == null: target = GameState.find_attack_move_target(p,order.point)
@@ -831,7 +865,44 @@ func _player_cast_skill(idx: int) -> void:
 		skill_aimer.set_aim(p,idx)
 		return
 	_cancel_pending_skill()
+	_cast_buffer = {}
+	if p.try_cast_skill(idx, mouse_world) or LanSession.is_client(): return
+	# Pressed a moment too early: keep the press, so combos do not depend on frame-perfect timing.
+	var waiting: float = maxf(p.skill_cds[idx], p.stun)
+	if p.skill_ranks[idx] > 0 and p.mp >= p.hero.skills[idx].cost and waiting > 0.0 and waiting <= CAST_BUFFER:
+		_cast_buffer = {"idx": idx, "until": Time.get_ticks_msec() + int(CAST_BUFFER * 1000.0)}
+
+func _tick_cast_buffer() -> void:
+	if _cast_buffer.is_empty(): return
+	var p = GameState.player
+	if not is_instance_valid(p) or p.dead or Time.get_ticks_msec() > _cast_buffer.until:
+		_cast_buffer = {}
+		return
+	if p.skill_cds[_cast_buffer.idx] > 0.0 or p.stun > 0.0: return
+	mouse_world = _cursor_point(Picker3D.Pick.ANY)
+	var idx: int = _cast_buffer.idx
+	_cast_buffer = {}
 	p.try_cast_skill(idx, mouse_world)
+
+func _tick_held_move(delta: float) -> void:
+	if not _hold_move: return
+	if not Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) or GameState.paused or pending_skill >= 0:
+		_hold_move = false
+		return
+	_hold_timer -= delta
+	if _hold_timer > 0.0 or get_viewport().gui_get_hovered_control() != null: return
+	_hold_timer = HOLD_REPEAT
+	var point := screen_to_ground(get_viewport().get_mouse_position())
+	if point.distance_to(_hold_point) < HOLD_MIN_MOVE: return
+	_hold_point = point
+	_issue_player_order({"type":"smart", "point": point, "target": null})
+
+## The cursor stays inside the game window during play, so it can always be found.
+func _sync_mouse_mode() -> void:
+	if DisplayServer.get_name() == "headless": return
+	var playing: bool = GameState.running and not GameState.paused and not (in_game_menu != null and in_game_menu.has_node("MatchPanel"))
+	var want := Input.MOUSE_MODE_CONFINED if playing else Input.MOUSE_MODE_VISIBLE
+	if Input.mouse_mode != want: Input.mouse_mode = want
 
 func _cancel_pending_skill() -> void:
 	pending_skill = -1
@@ -848,6 +919,7 @@ func _player_cast_summoner(idx: int) -> void:
 # UPDATE LOOP
 # =============================================================================
 func _process(delta: float) -> void:
+	_sync_mouse_mode()
 	if pending_skill >= 0 and (not GameState.running or GameState.paused or not is_instance_valid(GameState.player) or GameState.player.dead):
 		_cancel_pending_skill()
 	if (view3d == null or not view3d.is_active()) and GameState.started: GameState.cursor_world = get_global_mouse_position()
@@ -855,6 +927,8 @@ func _process(delta: float) -> void:
 	if not GameState.running:
 		_update_camera(delta)
 		return
+	_tick_held_move(delta)
+	_tick_cast_buffer()
 	if LanSession.is_client():
 		BrushVision.update_presentation()
 		_update_camera(delta)
@@ -929,7 +1003,8 @@ func _update_camera(delta: float) -> void:
 	if cam_shake_t > 0:
 		cam_shake_t = maxf(0.0, cam_shake_t - delta)
 		var amp = cam_shake_amp * (cam_shake_t / cam_shake_duration)
-		shake = Vector2(randf_range(-amp, amp), randf_range(-amp, amp))
+		var phase := cam_shake_t * 34.0
+		shake = Vector2(sin(phase * 1.7), sin(phase * 2.3)) * amp
 		if cam_shake_t == 0.0: _reset_camera_shake()
 	camera_shake_offset = shake
 	camera.position = GameState.cam_target + shake
@@ -1049,14 +1124,16 @@ func spawn_impact(pos: Vector2, color: Color, size: float) -> void:
 	imp.z_index = Constants.Z_FX
 	world_root.add_child(imp)
 
-func _spawn_target_marker(pos: Vector2) -> void:
+func _spawn_target_marker(pos: Vector2, attack: bool = false) -> void:
 	var m = _TargetRing.new()
+	m.attack = attack
 	m.global_position = pos
 	m.z_index = Constants.Z_FX
 	world_root.add_child(m)
 
 func on_level_up(c) -> void:
 	if lane_augments != null:
+		lane_augments.queue_mayhem(c, c.level)
 		if LanSession.is_host() and c.owner_peer > 1: LanSession.award_draft(c)
 		else: lane_augments.on_level_up(c)
 	if c == GameState.player: play_sfx("level")
@@ -1082,7 +1159,7 @@ func camera_shake(duration: float, amp: float, origin = null) -> void:
 	if origin is Vector2 and camera.position.distance_to(origin)>550.:return
 	if duration <= 0.0 or amp <= 0.0: return
 	cam_shake_t = max(cam_shake_t, duration)
-	cam_shake_amp = minf(6.,max(cam_shake_amp, amp))
+	cam_shake_amp = minf(11.,max(cam_shake_amp, amp))
 	cam_shake_duration = cam_shake_t
 
 func _reset_camera_shake() -> void:
@@ -1142,6 +1219,15 @@ func deal_damage(src, target, dmg: float, dmg_type: String, spell_id: String = "
 		luden_proc = 70 + src.bonus_ap * 0.1
 		src.item_cds["ludens"] = 6.0
 		spawn_spell_burst(src, target.world_pos(), 38)
+	var src_hero = src is Object and is_instance_valid(src) and src.kind == "champion"
+	if src_hero and target.kind in ["champion", "minion", "structure"]:
+		dmg = Mayhem.modify_damage(self, src, target, dmg, dmg_type)
+		if target.kind == "champion" and dmg_type != "exec": dmg = RoleFrames.dealt(src, target, dmg, dmg_type) * Comeback.damage_dealt(src.team)
+	if target.kind == "champion" and dmg_type != "exec":
+		dmg *= Comeback.damage_taken(target.team) * RoleFrames.taken(target)
+		if src is Object and is_instance_valid(src) and src.kind == "structure": dmg *= Constants.tower_hero_damage_mult()
+	if target.kind == "structure":
+		dmg *= _structure_damage_mult(src, target)
 	# Armor: LoL formula dmg * 100 / (100 + armor), applies to all incoming non-"exec" damage
 	if dmg_type != "exec":
 		dmg = dmg * 100.0 / (100.0 + ExpansionCombat.resist(target,src,dmg_type))
@@ -1237,7 +1323,15 @@ func deal_damage(src, target, dmg: float, dmg_type: String, spell_id: String = "
 	ExpansionCombat.after_hit(src,target,dmg_type)
 	if luden_proc>0 and target.hp>0 and not target.dead:deal_damage(src,target,luden_proc,"item_magic")
 	ExpansionCombat.lifeline(target,dmg_type,src)
+	if src_hero and is_instance_valid(src) and target.kind == "champion":
+		src.hero_damage_dealt += health_damage
+		target.hero_damage_taken += health_damage
+		if not target.dead: RoleFrames.on_hit(src, target, dmg_type)
+	if src_hero and is_instance_valid(src) and not target.dead:
+		Mayhem.after_damage(self, src, target, dmg_type, health_damage)
+	if target.dead: return
 	if target.hp <= 0:
+		if Mayhem.cheat_death(self, target) if target.kind == "champion" else false: return
 		_handle_death(src, target)
 
 func _handle_death(killer, victim) -> void:
@@ -1257,6 +1351,7 @@ func _handle_death(killer, victim) -> void:
 			victim.grant_comeback_gold()
 			var now = GameState.time
 			var respawn = clampf(4.0 + victim.level * 0.16, 4.0, 7.0)
+			if Comeback.rallying(victim.team): respawn -= 1.5
 			victim.respawn_at = now + respawn
 			victim.visible = false
 			victim.is_targetable = false
@@ -1267,16 +1362,33 @@ func _handle_death(killer, victim) -> void:
 			spawn_hero_impact(victim.world_pos(),3,34.,0.)
 			if killer != null and ("kind" in killer) and killer.kind == "champion":
 				killer.kills += 1
-				killer.gold += Constants.HERO_KILL_GOLD
-				killer.grant_xp(Constants.HERO_KILL_XP + victim.level * Constants.HERO_KILL_XP_PER_LEVEL)
-				if killer.owner_peer>0:floating_text(killer.world_pos()+Vector2(0,-68),"+%dg" % Constants.HERO_KILL_GOLD,Color("f4d481"),false,[killer.owner_peer])
+				var victim_streak: int = int(kill_announcer.streaks.get(victim.get_instance_id(),{}).get("streak",0))
+				var bounty: int = Constants.BOUNTY_PER_STREAK * maxi(0, victim_streak - 2)
+				var scale: float = Comeback.reward_scale(killer, victim)
+				var reward: int = int(round(Constants.HERO_KILL_GOLD * scale)) + bounty
+				killer.gold += reward
+				killer.grant_xp((Constants.HERO_KILL_XP + victim.level * Constants.HERO_KILL_XP_PER_LEVEL) * scale)
+				if killer.owner_peer>0:floating_text(killer.world_pos()+Vector2(0,-68),"+%dg" % reward,Color("f4d481"),bounty>0,[killer.owner_peer])
 				TankADCombat.champion_kill(killer)
+				Mayhem.on_kill(self, killer, victim)
+				Mayhem.on_takedown(self, killer, victim)
+				if killer == GameState.player:
+					_death_burst(victim.world_pos(), Color(1.0, 0.82, 0.3))
+					camera_shake(0.25, 7.0)
+					camera_kick(0.7)
 			kill_announcer.register(killer,victim)
 			_log_kill(killer, victim)
+			_announce_rally()
+			if killer == GameState.player and not kill_announcer.events.is_empty():
+				var event: String = kill_announcer.events.back()
+				if event in ["triple_kill", "quadra_kill", "penta_kill"]: time_warp(0.55, 0.3)
+				elif event == "double_kill": time_warp(0.12, 0.12)
+				else: time_warp(0.07, 0.1)
 			for c in CombatParticipation.assistants(killer,victim):
 				c.gold += CombatParticipation.ASSIST_GOLD
 				c.grant_xp(Constants.ASSIST_XP + victim.level * Constants.ASSIST_XP_PER_LEVEL)
 				c.assists += 1
+				Mayhem.on_takedown(self, c, victim)
 				if c.owner_peer>0:floating_text(c.world_pos()+Vector2(0,-68),"+%dg ASSIST" % CombatParticipation.ASSIST_GOLD,Color("f4d481"),false,[c.owner_peer])
 			victim.assist_hits.clear()
 			if victim == GameState.player:
@@ -1287,6 +1399,8 @@ func _handle_death(killer, victim) -> void:
 			if killer != null and ("kind" in killer) and killer.kind == "champion":
 				killer.cs += 1
 				killer.gold += victim.gold_val
+				Mayhem.on_kill(self, killer, victim)
+				if killer == GameState.player: play_sfx("coin")
 				if killer.owner_peer>0:floating_text(victim.world_pos()+Vector2(0,-20),"+"+str(victim.gold_val)+"g",Color(1.,.86,.2),false,[killer.owner_peer])
 			for c in GameState.champions:
 				if not c.dead and c.team != victim.team and c.global_position.distance_to(victim.world_pos()) <= 650:
@@ -1302,18 +1416,60 @@ func _handle_death(killer, victim) -> void:
 					"INHIBITOR DOWN", Color(1.0, 0.86, 0.2), true)
 			elif victim.type == "nexus":
 				var winner = RED if victim.team == BLUE else BLUE
+				time_warp(1.3, 0.25)
 				_end_game(winner)
 			else:
 				floating_text(victim.world_pos() + Vector2(0, -50),
 					"TURRET DESTROYED", Color(1.0, 0.86, 0.2), true)
 			_death_burst(victim.global_position, Color(1.0, 0.7, 0.3))
-			camera_shake(0.2, 5.0)
+			camera_shake(0.35, 9.0, victim.global_position)
+			_announce_rally()
 			if killer != null and ("kind" in killer) and killer.kind == "champion":
 				killer.gold += victim.gold_val
 			if killer != null and "team" in killer:
 				for c in GameState.champions:
 					if c.team == killer.team and not c.dead:
 						c.gold += 50
+
+## Buildings resist unprotected attacks: bring your minions, or it takes much longer.
+func _structure_damage_mult(src, target) -> float:
+	var mult := Constants.STRUCTURE_DAMAGE_MULT
+	if GameState.time > Constants.OVERTIME_START:
+		mult *= 1.0 + (GameState.time - Constants.OVERTIME_START) / 60.0 * Constants.OVERTIME_PER_MINUTE
+	if src is Object and is_instance_valid(src) and src.kind == "minion": return mult
+	for m in GameState.minions:
+		if not m.dead and m.team != target.team and m.world_pos().distance_to(target.world_pos()) <= Constants.BACKDOOR_RANGE:
+			return mult
+	return mult * Constants.BACKDOOR_DAMAGE_MULT
+
+func _announce_rally() -> void:
+	if GameState.player == null: return
+	var rallying := Comeback.rallying(GameState.player.team)
+	if rallying and not _rally_shown:
+		floating_text(GameState.player.world_pos(), "RALLY! YOUR TEAM FIGHTS HARDER", Color(0.5, 0.9, 1.0), true)
+	_rally_shown = rallying
+
+## Brief slow motion on big moments. Solo only: it would desynchronise a shared match.
+func time_warp(duration: float, speed: float) -> void:
+	if LanSession.active or GameState.is_pvp() or DisplayServer.get_name() == "headless": return
+	_time_warp_id += 1
+	var id := _time_warp_id
+	Engine.time_scale = speed
+	await get_tree().create_timer(duration, true, false, true).timeout
+	if id == _time_warp_id: Engine.time_scale = 1.0
+
+func camera_kick(metres: float) -> void:
+	if view3d != null and view3d.is_active() and view3d.rig != null: view3d.rig.kick(metres)
+
+## Straight into the next match from the result screen.
+func start_next_match(raise_difficulty: bool) -> void:
+	if LanSession.active or GameState.is_pvp(): return
+	var hero: String = GameState.player.hero_key if is_instance_valid(GameState.player) else selected_hero
+	if raise_difficulty:
+		Progression.difficulty = mini(99, Progression.difficulty + 1)
+		Progression.save_profile()
+	_return_to_main_menu()
+	_launch_game.call_deferred(hero)
 
 func _death_burst(pos: Vector2, color: Color) -> void:
 	for i in range(14):
@@ -1505,18 +1661,28 @@ class _ImpactFx extends Node2D:
 		var region=CombatFeedbackArt.frame(atlas,1,mini(3,int(elapsed/life*4.)),4)
 		draw_texture_rect_region(atlas,Rect2(-start_sz,-start_sz,start_sz*2.,start_sz*2.),region,Color(1,1,1,.75))
 
+# Answers every click: green arrows closing on the spot you will walk to, red on what you will attack.
 class _TargetRing extends Node2D:
 	var fx_kind := "target_ring"
-	var life: float = 0.4
+	var life: float = 0.42
 	var elapsed: float = 0.0
+	var attack: bool = false
 	func _process(delta):
 		elapsed += delta
-		scale = Vector2.ONE * (1.0 + elapsed / life * 1.5)
-		modulate.a = max(0.0, 1.0 - elapsed / life)
+		modulate.a = clampf(2.0 - 2.0 * elapsed / life, 0.0, 1.0)
 		queue_redraw()
 		if elapsed >= life: queue_free()
 	func _draw():
-		draw_arc(Vector2.ZERO, 14, 0, TAU, 32, Color(1.0, 0.86, 0.52), 2.5, true)
+		var col := Color(1.0, 0.25, 0.2) if attack else Color(0.45, 1.0, 0.4)
+		var r: float = lerpf(44.0, 16.0, 1.0 - pow(1.0 - clampf(elapsed / life, 0.0, 1.0), 3.0)) * (1.25 if attack else 1.0)
+		draw_arc(Vector2.ZERO, r, 0, TAU, 32, Color(0, 0, 0, 0.45), 6.0, true)
+		draw_arc(Vector2.ZERO, r, 0, TAU, 32, col, 3.0, true)
+		for i in range(4):
+			var dir := Vector2.from_angle(PI * 0.25 + i * PI * 0.5)
+			var tip := dir * r
+			var side := dir.rotated(PI * 0.5) * 8.0
+			var back := dir * (r + 12.0)
+			draw_colored_polygon(PackedVector2Array([tip, back + side, back - side]), col)
 
 class _LevelUpRing extends Node2D:
 	var fx_kind := "levelup_ring"
@@ -1596,9 +1762,11 @@ class _ReticleLayer extends Node2D:
 			if is_instance_valid(GameState.hover_unit) and not GameState.hover_unit.dead: hover_u = GameState.hover_unit
 		else: hover_u = _find_hover(mouse)
 		if hover_u != null:
-			var col = Color(1, 0.3, 0.3, 0.9) if hover_u.team != p.team else Color(0.3, 1, 0.3, 0.9)
-			var r = hover_u.size + 4
-			draw_arc(hover_u.world_pos(), r, 0, TAU, 32, col, 2.0, true)
+			var col = Color(1, 0.22, 0.18) if hover_u.team != p.team else Color(0.35, 0.7, 1.0)
+			var r = hover_u.size + 8
+			draw_circle(hover_u.world_pos(), r, Color(col.r, col.g, col.b, 0.14))
+			draw_arc(hover_u.world_pos(), r, 0, TAU, 32, Color(0, 0, 0, 0.5), 6.5, true)
+			draw_arc(hover_u.world_pos(), r, 0, TAU, 32, col, 4.0, true)
 			# Crosshair ticks
 			for i in range(4):
 				var a = i * PI / 2
@@ -1608,13 +1776,14 @@ class _ReticleLayer extends Node2D:
 		# Attack-target reticle (persistent while attacking)
 		if is_instance_valid(p.attack_target) and not p.attack_target.dead:
 			var t = p.attack_target
-			var tr = t.size + 7
-			var tc = Color(1, 0.3, 0.3, 0.8)
+			var tr = t.size + 14
+			var tc = Color(1, 0.22, 0.18)
 			var ang_offset = Time.get_ticks_msec() / 500.0
 			for i in range(4):
-				var a0 = ang_offset + i * PI / 2 - 0.3
-				var a1 = ang_offset + i * PI / 2 + 0.3
-				draw_arc(t.world_pos(), tr, a0, a1, 8, tc, 2.5, true)
+				var a0 = ang_offset + i * PI / 2 - 0.42
+				var a1 = ang_offset + i * PI / 2 + 0.42
+				draw_arc(t.world_pos(), tr, a0, a1, 10, Color(0, 0, 0, 0.5), 7.0, true)
+				draw_arc(t.world_pos(), tr, a0, a1, 10, tc, 4.5, true)
 		if not three_d: ReticleText.draw_2d(self, captions if captions != null else ReticleText.labels(mouse))
 
 	var _reach := {}   # unit instance id -> Vector2(size, farthest click-rect point from its feet, art px)
@@ -1892,6 +2061,13 @@ func _close_confirmation() -> bool:
 			return true
 	return false
 func _return_to_main_menu() -> void:
+	Engine.time_scale = 1.0
+	_time_warp_id += 1
+	_hold_move = false
+	_cast_buffer = {}
+	if DisplayServer.get_name() != "headless": Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_rally_shown = false
+	Comeback.reset()
 	match_load_serial+=1
 	if is_instance_valid(match_loader):match_loader.cancel()
 	match_loader=null

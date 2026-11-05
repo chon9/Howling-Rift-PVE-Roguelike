@@ -3,6 +3,7 @@ func near(value: float,expected: float,label: String) -> void:check(absf(value-e
 func equip(ids: Array) -> void:
  hero.inventory=ids;hero._apply_items();hero.hp=hero.hp_max;hero.shield=0.;hero.buffs.clear();hero.item_cds.clear();enemy.buffs.clear();enemy.shield=0.
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  await get_tree().process_frame
  Progression.persistent=false;Progression.levels.clear();Progression.difficulty=1;GameState.reset()
  game=load("res://scripts/Main.gd").new();add_child(game);game.set_process(false);game._start_game("lux")
@@ -14,7 +15,7 @@ func _ready() -> void:
  reset("morgana");equip(["ludens"]);hero.hp=100.;game.deal_damage(hero,enemy,100.,"magic","morgana_q");near(hero.hp,120.,"Siphon excludes Luden item damage")
  reset("garen");equip(["bloodthirster"]);hero.hp=100.;enemy.hp=5.;game.deal_damage(hero,enemy,100.,"auto");near(hero.hp,101.,"lifesteal uses actual health damage, excluding overkill")
  reset("garen");equip(["bloodthirster"]);hero.shield=400.;game.deal_damage(hero,enemy,100.,"auto");near(hero.shield,420.,"Bloodthirster preserves an unrelated shield")
- for i in range(30):game.deal_damage(hero,enemy,100.,"auto")
+ for i in range(60):game.deal_damage(hero,enemy,100.,"auto")
  near(hero.buffs.bloodthirster_shield.shield,hero.hp_max*.15,"overheal cap applies only to own shield")
  near(hero.shield,400.+hero.hp_max*.15,"overheal cap preserves other shields")
  for spec in [["lux",1,"prismatic_shield",3.],["annie",2,"molten_shield",3.],["garen",1,"courage_shield",3.],["leesin",1,"safeguard_shield",4.],["malphite",1,"granite_w_shield",3.],["morgana",2,"black_ward_shield",2.5],["riven",2,"valor",2.]]:

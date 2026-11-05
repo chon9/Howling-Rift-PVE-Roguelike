@@ -54,6 +54,10 @@ var idle_style: StyleBoxFlat
 var attention_phase: float = 0.0
 var objective: Label
 var rng = RandomNumberGenerator.new()
+var mayhem_levels: Array = []
+var mayhem_choices: Array = []
+var mayhem_picked: Array = []
+var mayhem_bar: HBoxContainer
 
 func setup(game) -> void:
 	main = game
@@ -118,6 +122,14 @@ func setup(game) -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	root.add_child(panel)
 	panel.hide()
+	mayhem_bar = HBoxContainer.new()
+	mayhem_bar.name = "MayhemCards"
+	mayhem_bar.add_theme_constant_override("separation", 14)
+	mayhem_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mayhem_bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	mayhem_bar.offset_left = -525; mayhem_bar.offset_right = 525
+	mayhem_bar.offset_top = 176; mayhem_bar.offset_bottom = 340
+	root.add_child(mayhem_bar)
 	main.hud.get_node("HudRoot").side_tip.hide()
 
 func _process(delta: float) -> void:
@@ -125,6 +137,7 @@ func _process(delta: float) -> void:
 	if not GameState.paused: attention_phase += delta
 	refresh_attention()
 	badge.visible = GameState.running
+	mayhem_bar.visible = GameState.running and not mayhem_choices.is_empty()
 	objective.visible = GameState.running and not main.hud.get_node("HudRoot").shop_open
 	if not GameState.running:
 		panel.hide()
@@ -168,6 +181,94 @@ func on_level_up(champion) -> void:
 		else:
 			var index=roll_choices(champion)[0]
 			apply_augment(champion,index,roll_offer(index,champion.level),champion.level)
+
+## Everyone starts with a Mayhem pick. Later picks come at Mayhem.LEVELS.
+func start_match() -> void:
+	if LanSession.is_client(): return
+	for c in GameState.champions:
+		if c.roster_active: queue_mayhem(c, Mayhem.LEVELS[0])
+
+func queue_mayhem(c, level: int) -> void:
+	if LanSession.is_client() or not Mayhem.LEVELS.has(level): return
+	var done: Array = c.mayhem_state.get("levels", [])
+	if done.has(level): return
+	done.append(level)
+	c.mayhem_state.levels = done
+	if c == GameState.player:
+		mayhem_levels.append(level)
+		if mayhem_choices.is_empty(): set_mayhem_choices(Mayhem.offer(c, level))
+		main.play_sfx("level")
+	elif LanSession.is_host() and c.owner_peer > 1:
+		LanSession.award_mayhem(c, level)
+	else:
+		var cards := Mayhem.offer(c, level, 1)
+		if not cards.is_empty(): Mayhem.grant(c, cards[0])
+
+func set_mayhem_choices(cards: Array) -> void:
+	if cards == mayhem_choices: return
+	mayhem_choices = cards.duplicate()
+	for child in mayhem_bar.get_children():
+		mayhem_bar.remove_child(child)
+		child.queue_free()
+	for i in range(mayhem_choices.size()):
+		mayhem_bar.add_child(_mayhem_card(i, mayhem_choices[i]))
+	if not mayhem_choices.is_empty() and mayhem_bar.is_inside_tree():
+		mayhem_bar.modulate.a = 0.0
+		var tween = create_tween()
+		tween.tween_property(mayhem_bar, "modulate:a", 1.0, 0.18)
+
+func choose_mayhem(slot: int) -> void:
+	if slot < 0 or slot >= mayhem_choices.size() or not GameState.running or GameState.paused: return
+	var id: String = mayhem_choices[slot]
+	mayhem_picked.append(Mayhem.CARDS[id].name)
+	main.floating_text(GameState.player.world_pos(), Mayhem.CARDS[id].name.to_upper(), Mayhem.TIER_COLORS[Mayhem.CARDS[id].tier], true)
+	main.play_sfx("level")
+	if LanSession.is_client():
+		LanSession.send_command("mayhem", {"index": slot})
+		set_mayhem_choices([])
+		return
+	Mayhem.grant(GameState.player, id)
+	if not mayhem_levels.is_empty(): mayhem_levels.pop_front()
+	set_mayhem_choices(Mayhem.offer(GameState.player, mayhem_levels[0]) if not mayhem_levels.is_empty() else [])
+
+func _mayhem_card(slot: int, id: String) -> Button:
+	var card: Dictionary = Mayhem.CARDS[id]
+	var color: Color = Mayhem.TIER_COLORS[card.tier]
+	var button = Button.new()
+	button.name = "MayhemCard%d" % (slot + 1)
+	button.custom_minimum_size = Vector2(340, 160)
+	button.focus_mode = Control.FOCUS_NONE
+	for state in [["normal", 0.97], ["hover", 1.0], ["pressed", 1.0]]:
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0.03, 0.055, 0.1, state[1]).lerp(color, 0.14 if state[0] == "hover" else 0.0)
+		style.border_color = color
+		style.set_border_width_all(3 if state[0] == "hover" else 2)
+		style.set_corner_radius_all(6)
+		style.shadow_color = Color(color, 0.3)
+		style.shadow_size = 12
+		button.add_theme_stylebox_override(state[0], style)
+	button.pressed.connect(func(): choose_mayhem(slot))
+	var box = VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = 14; box.offset_right = -14; box.offset_top = 10; box.offset_bottom = -10
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(box)
+	box.add_child(_card_label("[%d]  %s" % [slot + 1, Mayhem.TIER_NAMES[card.tier]], 15, color))
+	box.add_child(_card_label(card.name, 27, Color.WHITE))
+	var desc = _card_label(card.desc, 18, Color(0.82, 0.87, 0.95))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.custom_minimum_size.x = 310
+	box.add_child(desc)
+	return button
+
+func _card_label(text: String, font_size: int, color: Color) -> Label:
+	var label = Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
+
 # Compatibility entry used by tests: rewards come only from on_level_up.
 func refresh_milestones() -> void:
 	pass
@@ -235,12 +336,7 @@ func choose(index: int) -> void:
 	refresh_attention()
 
 func role_for(c) -> String:
-	if c.hero_key in SupportRoster.KEYS:return "support"
-	if c.hero_key in RosterExpansion12.KEYS:return RosterExpansion12.role(c.hero_key)
-	if c.hero_key in ["garen","malphite","thresh"]: return "tank"
-	if c.hero_key in ["darius","leesin","yasuo","zed"]: return "bruiser"
-	if c.hero_key in ["ashe","jinx","vayne","kayle"]: return "marksman"
-	return "caster"
+	return RoleFrames.role_of(c.hero_key)
 func roll_choices(c) -> Array:
 	var matching=[];var pool=range(AUGMENTS.size())
 	for i in pool:

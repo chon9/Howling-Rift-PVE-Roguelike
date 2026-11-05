@@ -13,6 +13,7 @@ func land(hero,target) -> void:
 func prepare(target,hp: float=10000.) -> void:
  target.dead=false;target.hp_max=hp;target.hp=hp;target.shield=0.;target.buffs.clear();target.inventory=["","","","","",""];target.bonus_armor=500.;target.difficulty_stats={};target.global_position=Vector2(1500,270)
 func _ready() -> void:
+ RoleFrames.enabled = false # this test pins exact formula numbers; RoleFrameTests covers the frames
  await get_tree().process_frame
  GameState.reset();Progression.persistent=false;Progression.levels.clear();Progression.difficulty=1
  game=load("res://scripts/Main.gd").new();add_child(game);game.set_process(false);game._start_game("vayne")

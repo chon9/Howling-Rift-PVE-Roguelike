@@ -314,7 +314,7 @@ func send_command(kind: String, data: Dictionary = {}) -> void:
 @rpc("any_peer","call_remote","reliable",1)
 func _command(kind: String, data: Dictionary) -> void:
  if not is_host() or not GameState.started or not GameState.running: return
- if kind not in ["order","skill","summoner","rank","recall","stop","buy","sell","draft","permanent"]:return
+ if kind not in ["order","skill","summoner","rank","recall","stop","buy","sell","draft","mayhem","permanent"]:return
  var sender = multiplayer.get_remote_sender_id()
  var c = null
  for hero in GameState.champions:
@@ -333,7 +333,10 @@ func execute(c, kind: String, data: Dictionary) -> void:
  var index = int(data.get("index",-1))
  match kind:
   "order":
-   if data.get("type") in ["smart","amove"]: main._issue_champion_order(c,{"type":data.type,"point":point,"sequence":clampi(int(data.get("sequence",0)),0,2147483647)})
+   if data.get("type") in ["smart","amove"]:
+    var order={"type":data.type,"point":point,"sequence":clampi(int(data.get("sequence",0)),0,2147483647)}
+    if data.has("target_kind"):order.target=GameState.find_unit_of_kind(point,c.team,str(data.target_kind))
+    main._issue_champion_order(c,order)
   "skill":
    if index >= 0 and index < 4: c.try_cast_skill(index,point)
   "summoner":
@@ -349,6 +352,7 @@ func execute(c, kind: String, data: Dictionary) -> void:
   "buy": c.try_buy_item(str(data.get("id","")))
   "sell": c.try_sell_item(index)
   "draft": choose_draft(c,index)
+  "mayhem": choose_mayhem(c,index)
   "permanent": return # Starting bonuses are captured by lobby configuration.
 func award_draft(c) -> void:
  if not main.lane_augments.MILESTONES.has(c.level): return
@@ -358,6 +362,18 @@ func award_draft(c) -> void:
  draft.awarded.append(c.level)
  draft.pending.append(c.level)
  fill_choices(draft,c)
+func award_mayhem(c,level: int) -> void:
+ if not draft_states.has(c.owner_peer): draft_states[c.owner_peer] = {"pending":[],"choices":[],"picked":[],"awarded":[],"offers":{}}
+ var draft = draft_states[c.owner_peer]
+ var queue=draft.get("mayhem_levels",[]);queue.append(level);draft.mayhem_levels=queue
+ if draft.get("mayhem",[]).is_empty():draft.mayhem=Mayhem.offer(c,level)
+func choose_mayhem(c,index: int) -> void:
+ var draft = draft_states.get(c.owner_peer,{})
+ var cards=draft.get("mayhem",[])
+ if index<0 or index>=cards.size():return
+ Mayhem.grant(c,cards[index])
+ var queue=draft.get("mayhem_levels",[]);if not queue.is_empty():queue.pop_front()
+ draft.mayhem=Mayhem.offer(c,queue[0]) if not queue.is_empty() else []
 func fill_choices(draft: Dictionary,c) -> void:
  if draft.pending.is_empty() or not draft.choices.is_empty(): return
  draft.choices = main.lane_augments.roll_choices(c)

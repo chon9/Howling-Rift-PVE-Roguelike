@@ -24,6 +24,8 @@ var time_value: Label
 var team_rows: Array = []     # one VBoxContainer per team
 var team_heads: Array = []
 var continue_button: Button
+var menu_button: Button
+var _won := false
 var _sections: Array = []
 
 
@@ -78,9 +80,16 @@ func _init() -> void:
 	column.add_child(_report_panel())
 
 	continue_button = _gold_button("PLAY AGAIN")
-	continue_button.pressed.connect(func(): get_tree().call_group("game_main", "_return_to_main_menu"))
-	var button_row := CenterContainer.new()
+	continue_button.pressed.connect(func(): get_tree().call_group("game_main", "start_next_match", _won))
+	menu_button = _gold_button("MAIN MENU")
+	menu_button.name = "MainMenu"
+	menu_button.custom_minimum_size.x = 240
+	menu_button.pressed.connect(func(): get_tree().call_group("game_main", "_return_to_main_menu"))
+	var button_row := HBoxContainer.new()
+	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	button_row.add_theme_constant_override("separation", 16)
 	button_row.add_child(continue_button)
+	button_row.add_child(menu_button)
 	column.add_child(button_row)
 	_sections = [subtitle, column.get_child(2), column.get_child(3), column.get_child(4), button_row]
 	set_process(false)
@@ -91,7 +100,13 @@ func present(won: bool, player, match_time: float) -> void:
 	show()
 	title.text = "VICTORY" if won else "DEFEAT"
 	title.add_theme_color_override("font_color", GOLD if won else LOSS_TEXT)
+	_won = won
 	subtitle.text = "The enemy Throne has fallen" if won else "Your Throne has fallen"
+	var solo: bool = not LanSession.active and not GameState.is_pvp()
+	if won and solo and Progression.win_streak >= 2:
+		subtitle.text += "  •  WIN STREAK %d" % Progression.win_streak
+	continue_button.visible = solo
+	continue_button.text = ("NEXT: N%d" % mini(99, Progression.difficulty + 1)) if won else "TRY AGAIN"
 	crest.setup(won)
 	if player != null and is_instance_valid(player):
 		portrait.texture = _portrait_of(player)
@@ -106,7 +121,7 @@ func present(won: bool, player, match_time: float) -> void:
 		winner = player.team if won else (Constants.RED if player.team == Constants.BLUE else Constants.BLUE)
 	_fill_teams(winner, player)
 	set_process(true)
-	continue_button.grab_focus()
+	(continue_button if solo else menu_button).grab_focus()
 	if is_inside_tree():
 		_reveal()
 

@@ -39,6 +39,7 @@ var _p_red: bool = false
 var _p_whiten: float = 0.0
 var _p_tint: Vector3 = Vector3.ONE
 var _p_fade: float = 1.0
+var _p_squash: float = 0.0
 var _key_animator: Object = null                      # _resolve_key cache: animator and its raw key
 var _key_raw: Variant = null
 var _hub: View3D = null                               # the host while its frame values are valid (sync only)
@@ -235,6 +236,11 @@ func _sync_body() -> bool:
 	if tint != _p_tint or not _p_set:
 		_p_tint = tint
 		card_mat.set_shader_parameter("tint", tint)
+	# Hit reaction: a quick squash from the feet that springs back as the flash fades.
+	var squash := clampf(float(src.hit_flash) / 0.14, 0.0, 1.0) if champion else clampf(float(src.get("flash_t")) / 0.45, 0.0, 1.0)
+	if squash != _p_squash:
+		_p_squash = squash
+		body.scale = Vector3(1.0 + 0.14 * squash, 1.0 - 0.1 * squash, 1.0)
 	var fade: float = src.modulate.a
 	if fade != _p_fade or not _p_set:
 		_p_fade = fade
@@ -307,7 +313,7 @@ func _resolve_key() -> bool:
 
 func _height() -> float:
 	if _is_champion():
-		return Constants.CHAMP_ART_HEIGHT
+		return Constants.CHAMP_ART_HEIGHT * float(source.get("visual_scale"))
 	return float(source.get("size")) * 2.7
 
 
