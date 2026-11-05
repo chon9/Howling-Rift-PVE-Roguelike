@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://tests/View3DPerfVisual.gd" id="1"]
+[node name="View3DPerfVisual" type="Node"]
+script = ExtResource("1")

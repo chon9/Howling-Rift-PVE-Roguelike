@@ -1,0 +1,21 @@
+# Status sprites v0.6.0
+
+Generated with the built-in imagegen tool. The PNG alpha channels are preserved. Each row has four frames; actual atlas dimensions are read at runtime rather than assuming the requested size.
+
+## control
+
+Asset: assets/vfx/status-control-v2.png
+
+Use case: stylized-concept. Asset type: production transparent MOBA status VFX spritesheet. Create one exact 4-column by 6-row grid, 1024x1536 image, each cell 256x256, transparent background, no text, no grid lines, no heroes, no scenery, no watermark. All 24 sprites strictly contained in their own cells with 32px transparent gutters. Each row is FOUR consecutive animation frames of the SAME small readable overhead magical status icon, stable centered anchor, subtle evolving sparks and glow, polished mature fantasy action game painterly rendering, brilliant luminous cores but clean sharp silhouettes, readable at 28px. Row 1 SILENCE: violet-white crossed slash through a mystical sealed mouth/speech sigil, unmistakable mute icon. Row 2 STUN: golden orbiting three stars and small spiral, orbit shifts smoothly across frames. Row 3 AIRBORNE: cyan upward chevrons, rising wisps. Row 4 ROOT: green-teal thorny chain links and binding knot, pulsing tiny runes. Row 5 SLOW: icy blue fractured snowflake and downward chevrons. Row 6 BURN: orange-red fierce compact flame, licking upwards. Exactly ordered rows; consistent scale centered all frames; do not add labels. Transparent alpha around individual effects, translucent glow only near icons.
+
+## boons
+
+Asset: assets/vfx/status-boons-v2.png
+
+Use case: stylized-concept. Asset type: production transparent MOBA buff VFX spritesheet. Create one exact 4-column by 6-row grid, 1024x1536 image, each cell 256x256, transparent background, no text, no grid lines, no heroes, no scenery, no watermark. All 24 sprites strictly contained in their own cells with 32px transparent gutters. Each row is FOUR consecutive animation frames of SAME magical status effect with stable centered anchor, pulsing runes and restrained particles, polished mature fantasy action game painterly rendering, brilliant cores and clean silhouettes. Rows 1 and 5 are full BODY overlays, a tall hollow oval centered at cell (128,128), fully transparent interior for a hero to remain visible; rows 2,3,4,6 are compact overhead symbols readable at 28px. Row 1 SHIELD: luminous cyan protective oval barrier, translucent soft rim only, crystalline arcs gliding around perimeter. Row 2 HEALING: emerald luminous medical cross with small upward gold sparks. Row 3 HASTE: turquoise twin forward wing/arrow strokes, speed wisps. Row 4 EMPOWERED ATTACK: gold-orange glowing sword rune, charged sparks. Row 5 IMMUNITY GUARD: golden white tall protective oval ring, clear transparent interior, rotating ward runes at rim, visually distinct from cyan shield. Row 6 MARKED TARGET: red magenta crosshair and diamond reticle, sharp magical edges. Exactly ordered rows, consistent scale centered all frames, no labels. Transparent alpha around all individual effects, gentle local translucent glow; avoid large opaque blotches.
+
+## debuffs
+
+Asset: assets/vfx/status-debuffs-v2.png
+
+Use case: stylized-concept. Asset type: production transparent MOBA debuff VFX spritesheet. Create an exact 4-column by 4-row grid, 1024x1024, each cell 256x256, transparent background, no text, grid lines, heroes, scenery or watermark. All 16 sprites strictly inside own cells with 32px transparent gutters. Each row FOUR consecutive animation frames of SAME compact overhead debuff symbol, stable centered anchor, restrained spark and pulse variation, polished mature fantasy action game painterly rendering with bright readable cores and clean silhouettes, readable at 28px. Row 1 BLEED: three ruby blood droplets and small crimson wound slash, visceral magic not cartoon. Row 2 HEALING REDUCED: emerald healing cross with crimson diagonal wound slash and tiny red sparks. Row 3 ARMOR SHRED: cracked gray silver shield with amber fractured slash, small metallic sparks. Row 4 ATTACK SPEED REDUCED: violet dim sword rune bound by smoky chains, downward violet wisps. Exact ordered rows, matching game UI scale, actual transparent alpha, local translucent glow only, no opaque background patches, no labels.

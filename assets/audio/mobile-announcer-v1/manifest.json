@@ -1,0 +1,62 @@
+{
+  "double_kill": {
+    "source": "BGM/DOUBLE KILL.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/double_kill.wav",
+    "duration": 1.327188
+  },
+  "first_blood": {
+    "source": "BGM/FIRST BLOOD.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/first_blood.wav",
+    "duration": 1.646281
+  },
+  "godlike": {
+    "source": "BGM/GODLIKE.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/godlike.wav",
+    "duration": 1.659138
+  },
+  "killing_spree": {
+    "source": "BGM/KILLING SPREE.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/killing_spree.wav",
+    "duration": 1.879751
+  },
+  "legendary": {
+    "source": "BGM/LEGENDARY.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/legendary.wav",
+    "duration": 1.859184
+  },
+  "maniac": {
+    "source": "BGM/MANIAC.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/maniac.wav",
+    "duration": 1.422517
+  },
+  "mega_kill": {
+    "source": "BGM/MEGA KILL.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/mega_kill.wav",
+    "duration": 1.897823
+  },
+  "monster_kill": {
+    "source": "BGM/MONSTER KILL.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/monster_kill.wav",
+    "duration": 1.712268
+  },
+  "savage": {
+    "source": "BGM/SAVAGE.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/savage.wav",
+    "duration": 1.297528
+  },
+  "triple_kill": {
+    "source": "BGM/TRIPLE KILL.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/triple_kill.wav",
+    "duration": 1.333696
+  },
+  "unstoppable": {
+    "source": "BGM/UNSTOPPABLE.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/unstoppable.wav",
+    "duration": 1.841338
+  },
+  "enemy_slain": {
+    "source": "BGM/YOU HAVE SLAIN AN ENEMY.m4a",
+    "asset": "assets/audio/mobile-announcer-v1/enemy_slain.wav",
+    "duration": 2.32839
+  }
+}

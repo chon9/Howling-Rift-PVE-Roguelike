@@ -1,0 +1,352 @@
+{
+  "hero_ahri": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 142.5,
+    "minimum_opaque_pixels": 5715
+  },
+  "hero_annie": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 150.5,
+    "minimum_opaque_pixels": 5865
+  },
+  "hero_ashe": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 158.5,
+    "minimum_opaque_pixels": 7012
+  },
+  "hero_darius": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 131.0,
+    "minimum_opaque_pixels": 1914
+  },
+  "hero_ezreal": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 149.0,
+    "minimum_opaque_pixels": 6691
+  },
+  "hero_garen": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 141.0,
+    "minimum_opaque_pixels": 7337
+  },
+  "hero_jinx": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 141.5,
+    "minimum_opaque_pixels": 5365
+  },
+  "hero_katarina": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 150.0,
+    "minimum_opaque_pixels": 5267
+  },
+  "hero_kayle": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 148.0,
+    "minimum_opaque_pixels": 7690
+  },
+  "hero_leesin": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 139.0,
+    "minimum_opaque_pixels": 5427
+  },
+  "hero_lux": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 152.0,
+    "minimum_opaque_pixels": 7804
+  },
+  "hero_malphite": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 140.0,
+    "minimum_opaque_pixels": 933
+  },
+  "hero_morgana": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 155.0,
+    "minimum_opaque_pixels": 5395
+  },
+  "hero_thresh": {
+    "source_size": [
+      972,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 140.5,
+    "minimum_opaque_pixels": 1474
+  },
+  "hero_vayne": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 156.5,
+    "minimum_opaque_pixels": 4755
+  },
+  "hero_veigar": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 150.5,
+    "minimum_opaque_pixels": 625
+  },
+  "hero_yasuo": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 146.5,
+    "minimum_opaque_pixels": 345
+  },
+  "hero_zed": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 140.5,
+    "minimum_opaque_pixels": 695
+  },
+  "minion_caster": {
+    "source_size": [
+      1374,
+      1145
+    ],
+    "actions": 5,
+    "frames": 30,
+    "body_height": 188.0,
+    "minimum_opaque_pixels": 11737
+  },
+  "minion_melee": {
+    "source_size": [
+      1374,
+      1145
+    ],
+    "actions": 5,
+    "frames": 30,
+    "body_height": 200.5,
+    "minimum_opaque_pixels": 13438
+  },
+  "minion_siege": {
+    "source_size": [
+      1374,
+      1145
+    ],
+    "actions": 5,
+    "frames": 30,
+    "body_height": 160.0,
+    "minimum_opaque_pixels": 14771
+  },
+  "minion_super": {
+    "source_size": [
+      1374,
+      1145
+    ],
+    "actions": 5,
+    "frames": 30,
+    "body_height": 207.0,
+    "minimum_opaque_pixels": 15966
+  },
+  "minion_tibbers": {
+    "source_size": [
+      1374,
+      1145
+    ],
+    "actions": 5,
+    "frames": 30,
+    "body_height": 166.0,
+    "minimum_opaque_pixels": 16026
+  },
+  "hero_blitzcrank": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 138.5,
+    "minimum_opaque_pixels": 5472
+  },
+  "hero_brand": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 164.0,
+    "minimum_opaque_pixels": 2829
+  },
+  "hero_caitlyn": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 162.5,
+    "minimum_opaque_pixels": 1776
+  },
+  "hero_fiora": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 162.0,
+    "minimum_opaque_pixels": 1059
+  },
+  "hero_leona": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 151.0,
+    "minimum_opaque_pixels": 5779
+  },
+  "hero_lucian": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 145.0,
+    "minimum_opaque_pixels": 5754
+  },
+  "hero_renekton": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 139.0,
+    "minimum_opaque_pixels": 1466
+  },
+  "hero_riven": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 163.0,
+    "minimum_opaque_pixels": 5602
+  },
+  "hero_sivir": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 163.0,
+    "minimum_opaque_pixels": 5705
+  },
+  "hero_syndra": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 151.5,
+    "minimum_opaque_pixels": 861
+  },
+  "hero_xerath": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 129.5,
+    "minimum_opaque_pixels": 3879
+  },
+  "hero_xinzhao": {
+    "source_size": [
+      971,
+      1619
+    ],
+    "actions": 10,
+    "frames": 60,
+    "body_height": 155.5,
+    "minimum_opaque_pixels": 724
+  }
+}

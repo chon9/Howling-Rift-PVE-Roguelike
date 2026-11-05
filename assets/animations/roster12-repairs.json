@@ -1,0 +1,55 @@
+{
+  "mode": "builtin",
+  "assets": [
+    {
+      "key": "caitlyn",
+      "source": "generated_images\\01a11b5f-8792-7002-a89f-ac05f95cb36d\\exec-ccfc65fa-3308-4fb2-8217-7ff328ab6ca4.png",
+      "prompt": "Repair game ACTION animation strip using the supplied character reference. Same exact original hero Caliber identity: female precision sharpshooter with dark violet ponytail navy coat brass rifle and knee-high leather boots, no hat. TRANSPARENT background. Exactly SIX COLUMNS x 1 ROWS. Row 1 q: shoot piercing rifle bolt. CRITICAL: the full recognizable HERO BODY must be present in EVERY SINGLE CELL including release and recovery frames; no cell may contain just a projectile, flame column, magic orb or weapon. Effects stay small near the hero's hands; free-flying projectiles and distant impacts are omitted because the game renders those separately. Six articulated phases anticipation, windup, release, followthrough, recover, ready. Orthographic three quarter overhead facing RIGHT. Consistent body proportions and feet baseline, large generous transparent gutters. No text or ground shadows. Same polished painted rendering as reference. Horizontal canvas 6:1. All six cells have the whole hero.",
+      "actions": [
+        "q"
+      ]
+    },
+    {
+      "key": "lucian",
+      "source": "generated_images\\01a11b5f-8792-7002-a89f-ac05f95cb36d\\exec-71f5a4c9-1a71-4030-b07e-61919da9ae15.png",
+      "prompt": "Repair game ACTION animation strip using the supplied character reference. Same exact original hero Solstice identity: male dark-skinned twin pistol hunter with white armored longcoat gold trims and black short hair. TRANSPARENT background. Exactly SIX COLUMNS x 1 ROWS. Row 1 q: forward piercing pistol flash. CRITICAL: the full recognizable HERO BODY must be present in EVERY SINGLE CELL including release and recovery frames; no cell may contain just a projectile, flame column, magic orb or weapon. Effects stay small near the hero's hands; free-flying projectiles and distant impacts are omitted because the game renders those separately. Six articulated phases anticipation, windup, release, followthrough, recover, ready. Orthographic three quarter overhead facing RIGHT. Consistent body proportions and feet baseline, large generous transparent gutters. No text or ground shadows. Same polished painted rendering as reference. Horizontal canvas 6:1. All six cells have the whole hero.",
+      "actions": [
+        "q"
+      ]
+    },
+    {
+      "key": "sivir",
+      "source": "generated_images\\01a11b5f-8792-7002-a89f-ac05f95cb36d\\exec-008199a7-5e53-4f30-b8c1-0eb3e4b026e9.png",
+      "prompt": "Repair game ACTION animation strip using the supplied character reference. Same exact original hero Zephyr identity: female desert mercenary with bronze skin teal scarf gold leather armor and huge four bladed throwing crossblade. TRANSPARENT background. Exactly SIX COLUMNS x 1 ROWS. Row 1 q: throw spinning crossblade. CRITICAL: the full recognizable HERO BODY must be present in EVERY SINGLE CELL including release and recovery frames; no cell may contain just a projectile, flame column, magic orb or weapon. Effects stay small near the hero's hands; free-flying projectiles and distant impacts are omitted because the game renders those separately. Six articulated phases anticipation, windup, release, followthrough, recover, ready. Orthographic three quarter overhead facing RIGHT. Consistent body proportions and feet baseline, large generous transparent gutters. No text or ground shadows. Same polished painted rendering as reference. Horizontal canvas 6:1. All six cells have the whole hero.",
+      "actions": [
+        "q"
+      ]
+    },
+    {
+      "key": "brand",
+      "source": "generated_images\\01a11b5f-8792-7002-a89f-ac05f95cb36d\\exec-d89f53e9-756c-4133-975d-aa65affba414.png",
+      "prompt": "Repair game ACTION animation strip using the supplied character reference. Same exact original hero Pyre identity: male charred volcanic elemental mage, black cracked stone skin with orange molten seams, flaming hands and ember crown. TRANSPARENT background. Exactly SIX COLUMNS x 2 ROWS. Row 1 q: shoot narrow flame bolt\nRow 2 w: summon vertical fire column. CRITICAL: the full recognizable HERO BODY must be present in EVERY SINGLE CELL including release and recovery frames; no cell may contain just a projectile, flame column, magic orb or weapon. Effects stay small near the hero's hands; free-flying projectiles and distant impacts are omitted because the game renders those separately. Six articulated phases anticipation, windup, release, followthrough, recover, ready. Orthographic three quarter overhead facing RIGHT. Consistent body proportions and feet baseline, large generous transparent gutters. No text or ground shadows. Same polished painted rendering as reference. Horizontal canvas 3:1. All six cells have the whole hero.",
+      "actions": [
+        "q",
+        "w"
+      ]
+    },
+    {
+      "key": "syndra",
+      "source": "generated_images\\01a11b5f-8792-7002-a89f-ac05f95cb36d\\exec-df7f9953-5016-48d1-928d-38d00e99e296.png",
+      "prompt": "Repair game ACTION animation strip using the supplied character reference. Same exact original hero Umbra identity: female gravity sorceress levitating dark purple robe with silver crown, surrounded by small violet-black spheres. TRANSPARENT background. Exactly SIX COLUMNS x 1 ROWS. Row 1 attack: basic attack with an orb fired from hand. CRITICAL: the full recognizable HERO BODY must be present in EVERY SINGLE CELL including release and recovery frames; no cell may contain just a projectile, flame column, magic orb or weapon. Effects stay small near the hero's hands; free-flying projectiles and distant impacts are omitted because the game renders those separately. Six articulated phases anticipation, windup, release, followthrough, recover, ready. Orthographic three quarter overhead facing RIGHT. Consistent body proportions and feet baseline, large generous transparent gutters. No text or ground shadows. Same polished painted rendering as reference. Horizontal canvas 6:1. All six cells have the whole hero.",
+      "actions": [
+        "attack"
+      ]
+    },
+    {
+      "key": "xerath",
+      "source": "generated_images\\01a11b5f-8792-7002-a89f-ac05f95cb36d\\exec-10cd2549-4c4d-44a7-accf-6b4566810721.png",
+      "prompt": "Repair game ACTION animation strip using the supplied character reference. Same exact original hero Arclight identity: levitating arcane elemental formed of luminous sapphire energy with bronze floating armor shards, no legs, glowing eyes. TRANSPARENT background. Exactly SIX COLUMNS x 2 ROWS. Row 1 q: charge and release straight arcane beam\nRow 2 e: fire compact electric stun orb. CRITICAL: the full recognizable HERO BODY must be present in EVERY SINGLE CELL including release and recovery frames; no cell may contain just a projectile, flame column, magic orb or weapon. Effects stay small near the hero's hands; free-flying projectiles and distant impacts are omitted because the game renders those separately. Six articulated phases anticipation, windup, release, followthrough, recover, ready. Orthographic three quarter overhead facing RIGHT. Consistent body proportions and feet baseline, large generous transparent gutters. No text or ground shadows. Same polished painted rendering as reference. Horizontal canvas 3:1. All six cells have the whole hero.",
+      "actions": [
+        "q",
+        "e"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "tool": "built-in image_gen",
+  "transparent_background": true,
+  "layout": "8 columns, 6 rows",
+  "prompts": [
+    {
+      "key": "projectiles",
+      "prompt": "Use case: stylized-concept. Asset type: one production VFX sprite sheet for a fantasy action MOBA. Transparent RGBA background with real alpha, no text, no grid lines, no borders, no scenery. Precisely 8 equal columns and 6 equal rows, 48 separate equally sized cells. Each cell contains ONE centered isolated effect with transparent padding; effects must never cross cell boundaries. The eight cells of each row are consecutive animation frames left to right, with consistent position and scale, smooth changing shape. Six rows top to bottom use these identities: row1 icy cyan frost; row2 orange-red fire; row3 silver-gold sword energy; row4 white-gold radiant light; row5 violet-cyan spirit magic; row6 electric blue arcane energy. Premium hand-painted videogame effects, brilliant core, textured energy, clean silhouette, readable at small sizes. Each row is a looping travelling missile effect pointing to the RIGHT: row1 elongated crystalline ice arrow and cold mist tail, row2 compact fireball with flame trail, row3 sharp silver-gold crescent slash, row4 radiant prism bolt, row5 spherical cyan orb with violet wisps, row6 electric blue spear bolt with lightning tail. Horizontal movement implied but each sprite remains centered in its cell. Maintain equal gutters. Canvas landscape, intended as 8 by 6 exact grid."
+    },
+    {
+      "key": "impacts",
+      "prompt": "Use case: stylized-concept. Asset type: one production VFX sprite sheet for a fantasy action MOBA. Transparent RGBA background with real alpha, no text, no grid lines, no borders, no scenery. Precisely 8 equal columns and 6 equal rows, 48 separate equally sized cells. Each cell contains ONE centered isolated effect with transparent padding; effects must never cross cell boundaries. The eight cells of each row are consecutive animation frames left to right, with consistent position and scale, smooth changing shape. Six rows top to bottom use these identities: row1 icy cyan frost; row2 orange-red fire; row3 silver-gold sword energy; row4 white-gold radiant light; row5 violet-cyan spirit magic; row6 electric blue arcane energy. Premium hand-painted videogame effects, brilliant core, textured energy, clean silhouette, readable at small sizes. Each row is an expanding magical impact burst animation: first frame compact bright spark, then opening radial shockwave, then broken ring and outward fragments, then dissipating motes in final frame. Row1 angular ice shards, row2 billowing orange flame and embers, row3 circular silver-gold blade shockwave, row4 ornate radiant golden ring, row5 cyan-violet spectral spiral, row6 electric-blue lightning explosion. All bursts centered, viewed directly from above, fit inside cells. No opaque smoke or background. Canvas landscape, intended as 8 by 6 exact grid."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "gender": "Female",
+  "rate": 0,
+  "pitch_processing": "none",
+  "language": "en-US",
+  "lines": [
+    "first_blood",
+    "double_kill",
+    "triple_kill",
+    "quadra_kill",
+    "penta_kill",
+    "killing_spree",
+    "shutdown",
+    "enemy_slain",
+    "ally_slain",
+    "victory_voice",
+    "defeat_voice"
+  ],
+  "voice": "Microsoft Zira Desktop"
+}

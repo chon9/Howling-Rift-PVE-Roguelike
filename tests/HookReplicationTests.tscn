@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://tests/HookReplicationTests.gd" id="1"]
+[node name="HookReplicationTests" type="Node"]
+script = ExtResource("1")

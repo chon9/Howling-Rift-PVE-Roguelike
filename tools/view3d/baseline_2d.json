@@ -1,0 +1,85 @@
+{
+ "generated": "2026-10-13T00:47:33",
+ "mode": "2d",
+ "note": "Tests failing on the unmodified 2D game (W0-A). Later runs tolerate only these failures. CursorShieldTests failed under --jobs 3 but passed in a sequential re-run (load-sensitive). PvePresentationTests hangs (SCRIPT ERROR then timeout). SteamSmokeTests needs a signed-in Steam client. W0 gate: MatchLoadingTests is NOT tolerated but is flaky under parallel load (engine RID race in the headless dummy texture storage during threaded loads: 'Attempting to initialize the wrong RID' / 'Parameter \"t\" is null' at texture_2d_initialize; checks still 0 failures); re-run it with --jobs 1 before treating it as a regression. W0-B gate: Roster12BattleTests added. 'Saur temporary health applied' fails at random because the test casts Renekton R after 800 frames of AI combat and does not clear the champion's stun field (try_cast_skill returns false while stun > 0). Pristine HEAD (git archive copy) failed 9/12 runs; the W0-B tree failed 8/12 (jobs 3) and 4/6 (jobs 1). W0-A's baseline run passed it by chance. W1 gate: RosterMenuTests can add a second check failure '<hero> kit damages enemies' (leesin/yasuo/kayle/zed seen) under parallel CPU load; reproduced on a pristine HEAD copy under the same load (2 of 3 stress runs), so it is a pre-existing load flake. Sequential runs show only 'yasuo skill casts 3'.",
+ "total": 70,
+ "failed": [
+  "ARAMLoopTests",
+  "ActionAnimationTests",
+  "AudioGraphicsTests",
+  "CursorShieldTests",
+  "DeadeyeTests",
+  "FastPveTests",
+  "GroundScalingTests",
+  "InteractionTests",
+  "ProgressionTests",
+  "PvePresentationTests",
+  "RixaBalanceTests",
+  "Roster12BattleTests",
+  "RosterMenuTests",
+  "SteamSmokeTests"
+ ],
+ "reasons": {
+  "ARAMLoopTests": [
+   "ARAMLoopTests exit 1",
+   "ARAMLoopTests 2 error line(s)"
+  ],
+  "ActionAnimationTests": [
+   "ActionAnimationTests exit 1",
+   "ActionAnimationTests 6 error line(s)"
+  ],
+  "AudioGraphicsTests": [
+   "AudioGraphicsTests exit 1",
+   "AudioGraphicsTests 2 error line(s)"
+  ],
+  "CursorShieldTests": [
+   "CursorShieldTests exit 1",
+   "CursorShieldTests 3 error line(s)"
+  ],
+  "DeadeyeTests": [
+   "DeadeyeTests exit 1",
+   "DeadeyeTests 2 error line(s)"
+  ],
+  "FastPveTests": [
+   "FastPveTests exit 1",
+   "FastPveTests 2 error line(s)"
+  ],
+  "GroundScalingTests": [
+   "GroundScalingTests exit 1",
+   "GroundScalingTests 6 error line(s)"
+  ],
+  "InteractionTests": [
+   "InteractionTests exit 1",
+   "InteractionTests 2 error line(s)"
+  ],
+  "ProgressionTests": [
+   "ProgressionTests exit 1",
+   "ProgressionTests 1 error line(s)"
+  ],
+  "PvePresentationTests": [
+   "PvePresentationTests timeout",
+   "PvePresentationTests 2 error line(s)"
+  ],
+  "RixaBalanceTests": [
+   "RixaBalanceTests exit 1",
+   "RixaBalanceTests 1 error line(s)"
+  ],
+  "Roster12BattleTests": [
+   "Roster12BattleTests exit 1",
+   "Roster12BattleTests 1 error line(s)"
+  ],
+  "RosterMenuTests": [
+   "RosterMenuTests exit 1",
+   "RosterMenuTests 1 error line(s)"
+  ],
+  "SteamSmokeTests": [
+   "SteamSmokeTests exit 1",
+   "SteamSmokeTests 1 error line(s)"
+  ]
+ },
+ "flaky": [
+  "CursorShieldTests",
+  "MatchLoadingTests",
+  "Roster12BattleTests"
+ ]
+}

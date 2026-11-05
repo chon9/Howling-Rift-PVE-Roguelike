@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://tests/OverheadView3DTests.gd" id="1"]
+[node name="OverheadView3DTests" type="Node"]
+script = ExtResource("1")

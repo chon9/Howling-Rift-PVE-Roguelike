@@ -1,0 +1,24 @@
+{
+  "name": "GodotSteam",
+  "version": "4.23.1",
+  "steamworks": "1.65",
+  "platform": "Windows x64",
+  "source": "https://codeberg.org/godotsteam/godotsteam/releases/tag/v4.23.1",
+  "archive_url": "https://codeberg.org/godotsteam/godotsteam/releases/download/v4.23.1/godotsteam-4.23.1-gdextension-plugin-4.4.zip.tar.xz",
+  "archive_sha256": "37D53EDE5EDA11D2247D70C1AF91F95A4777AD2A419FC8A24DE1CC816D21CC0A",
+  "files": [
+    {
+      "name": "libgodotsteam.windows.template_debug.x86_64.dll",
+      "sha256": "2F94C4EF1142534F332D0CBB41EE597F67AF6FB6498A110C3644984488ED28CE"
+    },
+    {
+      "name": "libgodotsteam.windows.template_release.x86_64.dll",
+      "sha256": "799E1917061854661AB53C8EF6D297366193ED495088B34F5E32A280FA4EF744"
+    },
+    {
+      "name": "steam_api64.dll",
+      "sha256": "8DE54D32508E216C9135B8BF025749243D44E404C1C22A8E5FE35ACECABE7A9C"
+    }
+  ],
+  "note": "Official native extension with SteamMultiplayerPeer. Extension manifest narrowed to installed Windows x64 files."
+}

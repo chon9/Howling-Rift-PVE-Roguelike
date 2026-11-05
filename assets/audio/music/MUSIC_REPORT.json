@@ -1,0 +1,20 @@
+{
+  "oath-of-the-rift": {
+    "arrangement": "ambient-v2",
+    "seconds": 180,
+    "phrase_seconds": 15.0,
+    "peak": 0.44999998807907104,
+    "rms": 0.06807947903871536,
+    "seam_delta": 0.0011304542422294617,
+    "piano_notes": 24
+  },
+  "bridge-of-embers": {
+    "arrangement": "ambient-v2",
+    "seconds": 240,
+    "phrase_seconds": 15.0,
+    "peak": 0.39853641390800476,
+    "rms": 0.07499990612268448,
+    "seam_delta": 0.0016103610396385193,
+    "piano_notes": 48
+  }
+}

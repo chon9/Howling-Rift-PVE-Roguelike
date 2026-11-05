@@ -1,0 +1,8 @@
+# Keep the complete default secret rules; exempt only this checked asset ID.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Non-secret generated artwork identifier in COMBAT_FEEDBACK_PROMPTS.json"
+regexTarget = "secret"
+regexes = ['''^kill-celebration-v1$''']

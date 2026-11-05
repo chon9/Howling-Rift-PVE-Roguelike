@@ -1,0 +1,45 @@
+# Godot cache and local editor state
+.godot/
+
+# Exported builds are distributed as GitHub release assets
+/builds/
+/*.exe
+/*.pck
+
+# Local engine binaries and original duplicate audio sources
+/tools/steam/engine/
+/BGM/
+
+# Test output and machine-local profiles; keep test source
+/tests/*.log
+/tests/*.png
+/tests/*.png.import
+/tests/*.gif.import
+/tests/*.gif
+/tests/*.mp4
+/tests/*.cfg
+/tests/*.tmp
+/tests/*.json
+/tests/*.txt
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+.codex/
+.agents/
+
+# Temporary and OS files
+*.tmp
+*.TMP
+*~
+__pycache__/
+*.pyc
+Thumbs.db
+.DS_Store

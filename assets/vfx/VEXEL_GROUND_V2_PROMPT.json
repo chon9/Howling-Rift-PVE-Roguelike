@@ -1,0 +1,20 @@
+{
+  "mode": "generate",
+  "prompt": "Production fantasy MOBA ground spell animation spritesheet, genuine transparent alpha background. EXACT grid FOUR columns TWO rows, eight square cells, total canvas landscape2:1. No text, no grids, no backgrounds. All frames strictly contained in equal cells, zero overlap. IMPORTANT geometry: both spells are seen EXACTLY TOP DOWN, not isometric, not oval. The ground footprint must be a PERFECT CIRCLE, centered exactly at cell center, with radius40% of cell width (10% clear padding each side). Circle position and radius IDENTICAL across ALL eight frames. Camera looks straight down, vertical effects may suggest depth but cannot shift the center or footprint. Style premium handpainted dark violet magic with elegant lavender runes, restrained bright highlights, matching realistic icy MOBA bridge, readable compact effects, no cartoon look. ROW1: dark meteor attack FOUR sequential frames: frame1 a flat thin purple circular ground warning rune, hollow transparent center, no pillars; frame2 the SAME warning rune with a small black-violet meteor orb at circle center, descending light but entirely inside circle; frame3 SAME circular footprint violet-white compact meteor explosion and rock shards, with exact circle perimeter; frame4 fading violet crater and fragments inside same circle. ROW2: magical circular event cage FOUR sequential frames: frame1 flat circular violet rune warning perimeter with 8 small evenly spaced pillar bases, hollow transparent middle; frame2 activated cage with eight short upright violet pylons at the SAME circular perimeter, joined by a luminous thin circular wall, empty center; frame3 same cage with subtle brighter pulsing runes, exact same positions; frame4 same pylons and ring dissolving, hollow middle. Cage pylons must be small and viewed from above, not tall columns leaning in from an isometric view. Keep all other areas transparent. Ground circular boundary is the core of the design. Do not draw heroes, creatures, UI, letters, borders or scenery.",
+  "mapping": {
+    "meteor": {
+      "center": [
+        0.5,
+        0.5
+      ],
+      "rim_radius": 0.39
+    },
+    "cage": {
+      "center": [
+        0.5,
+        0.48
+      ],
+      "rim_radius": 0.375
+    }
+  }
+}
