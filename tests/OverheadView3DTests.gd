@@ -294,7 +294,7 @@ func _test_float_declutter() -> void:
 	for ft in pile:
 		ft.queue_free()
 	# A text whose natural spot overlaps the player's name/bar block is lifted above it. The spawn point is walked
-	# north until its unnudged rect overlaps the block (the projection depends on the camera).
+	# up the screen until its unnudged rect overlaps the block (the projection depends on the camera).
 	var p = GameState.player
 	var bar = layer.anchor_for(p)
 	var ft2 = FloatingText.new()
@@ -307,7 +307,7 @@ func _test_float_declutter() -> void:
 	var drawn := Rect2()
 	var hit := false
 	for north in range(0, 260, 10):
-		ft2.global_position = p.global_position - Vector2(0, north)
+		ft2.global_position = p.global_position + View3DTestKit.screen_dir(Vector2.UP) * north
 		ft2.start_y = ft2.global_position.y
 		h2.placed = false
 		layer.sync(host)

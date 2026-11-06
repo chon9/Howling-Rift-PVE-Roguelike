@@ -90,7 +90,8 @@ func is_flipped() -> bool:
  # Keep the previous side when walking nearly straight up/down.
  # Tiny horizontal changes must not make the whole body flicker left/right.
  if unit.kind=="champion":
-  if unit.facing.x>0.15: visual_facing_sign=1
-  elif unit.facing.x< -0.15: visual_facing_sign=-1
+  var side:=ViewConfig.screen_x(unit.facing)
+  if side>0.15: visual_facing_sign=1
+  elif side< -0.15: visual_facing_sign=-1
  else: visual_facing_sign=unit.facing_sign
  return visual_facing_sign<0

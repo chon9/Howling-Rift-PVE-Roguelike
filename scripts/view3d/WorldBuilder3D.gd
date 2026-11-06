@@ -89,10 +89,12 @@ const ICE_SPOTS := [
 ]
 const PROP_COUNT := 30
 const ICE_SHADER := preload("res://assets/shaders/view3d/ice_crystal.gdshader")
-## A low, warm sun over cool ambient (HD-2D): units and buildings throw silhouette shadows about as long as they
-## are tall, falling back and to the right.
-const SUN_ROT := Vector3(-46, ViewConfig.SUN_YAW_DEG, 0)
-const RIM_ROT := Vector3(-25, 160, 0)
+## A high, warm sun over cool ambient: shadows stay short, soft and light, a pool beside the feet rather than a
+## second dark figure on the ground, so units and the floor stay readable.
+const SUN_ROT := Vector3(-64, ViewConfig.SUN_YAW_DEG, 0)
+const SHADOW_OPACITY := 0.5
+const SHADOW_BLUR := 3.0
+const RIM_ROT := Vector3(-25, 160 + ViewConfig.YAW_DEG, 0)
 ## Off-lane depth: height fog below the deck so the abyss, piers and props fade into a dark, soft mist
 ## (the eye stays on the lane, as in LoL / MLBB).
 const FOG_HEIGHT_M := -0.6
@@ -102,13 +104,13 @@ const FOG_HEIGHT_DENSITY := 0.14
 ## lights to display-space albedo (probe 2.1 holds for unshaded cards only), which made every lit surface
 ## ~30% brighter and bluer; its profile is calibrated so lit surfaces match Forward+ (Arena3DVisual parity).
 const LIGHT_FORWARD := {
-	"sun_energy": 2.0, "sun_color": Color(1.0, 0.83, 0.6),
+	"sun_energy": 1.6, "sun_color": Color(1.0, 0.83, 0.6),
 	"ambient_color": Color(0.5, 0.54, 0.7), "ambient_energy": 0.46,
 	"rim_energy": 0.4, "rim_color": Color(0.5, 0.68, 1.0),
 	"fog_color": Color(0.06, 0.10, 0.18),
 }
 const LIGHT_COMPAT := {
-	"sun_energy": 1.05, "sun_color": Color(1.0, 0.8, 0.56),
+	"sun_energy": 0.84, "sun_color": Color(1.0, 0.8, 0.56),
 	"ambient_color": Color(0.5, 0.53, 0.64), "ambient_energy": 0.62,
 	"rim_energy": 0.2, "rim_color": Color(0.5, 0.68, 1.0),
 	# Fog blends in display space here (linear in Forward+), which darkened partly fogged scenery.
@@ -473,6 +475,7 @@ func _update_light_pools() -> void:
 func _build_shafts() -> void:
 	_shaft_root = Node3D.new()
 	_shaft_root.name = "LightShafts"
+	_shaft_root.rotation.y = ViewConfig.yaw_rad()
 	add_child(_shaft_root)
 	var shader: Shader = load("res://assets/shaders/view3d/light_shaft.gdshader")
 	var pitch := deg_to_rad(float(ViewConfig.camera_preset().pitch))
@@ -503,7 +506,7 @@ func _update_shafts(host: Node3D, t: float) -> void:
 		return
 	var hit = Plane(Vector3.UP, 0.0).intersects_ray(cam.global_position, -cam.global_basis.z)
 	if hit != null:
-		_shaft_root.global_position = Vector3((hit as Vector3).x, 0.0, Constants.LANE_Y * ViewConfig.S)
+		_shaft_root.global_position = Vector3((hit as Vector3).x, 0.0, (hit as Vector3).z)
 	for mat in _shaft_mats:
 		mat.set_shader_parameter("shaft_time", t)
 
@@ -618,7 +621,8 @@ func _build_environment() -> void:
 	sun.shadow_enabled = true
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.directional_shadow_max_distance = 45.0
-	sun.shadow_blur = 1.4
+	sun.shadow_blur = SHADOW_BLUR
+	sun.shadow_opacity = SHADOW_OPACITY
 	add_child(sun)
 	rim = DirectionalLight3D.new()
 	rim.name = "Rim"
@@ -1038,7 +1042,7 @@ func _build_brush() -> void:
 				rect.position.y + (row + 0.5) * rect.size.y / 2.0 + rng.randf_range(-12.0, 12.0))
 			var w := rng.randf_range(40.0, 56.0) * ViewConfig.S * ViewConfig.UNIT_SCALE
 			var h := rng.randf_range(30.0, 42.0) * ViewConfig.S * ViewConfig.UNIT_SCALE
-			var basis := Basis(Vector3.UP, rng.randf_range(-0.35, 0.35)).scaled(Vector3(w, h, w))
+			var basis := Basis(Vector3.UP, ViewConfig.yaw_rad() + rng.randf_range(-0.35, 0.35)).scaled(Vector3(w, h, w))
 			mm.set_instance_transform(k, Transform3D(basis, ViewMath.to3(pos, -0.02)))
 			points.append(pos)
 			var shade := rng.randf_range(0.9, 1.08)

@@ -5,6 +5,11 @@ extends RefCounted
 const FOCUS_SIM := Vector2(1300, 270)
 
 
+## The sim direction that appears as `dir` on screen under the turned camera (RIGHT is screen right, UP is screen up).
+static func screen_dir(dir: Vector2) -> Vector2:
+	return dir.rotated(-ViewConfig.yaw_rad())
+
+
 ## A ViewHost (plan 5.4) with a real Camera3D in the "lol" preset pose, for testing views in isolation.
 class FakeView:
 	extends Node3D
@@ -45,10 +50,11 @@ class FakeView:
 		focus = focus_sim
 		var p: Dictionary = ViewConfig.PRESETS.get(preset_name, ViewConfig.PRESETS[ViewConfig.DEFAULT_PRESET])
 		var pitch := deg_to_rad(float(p.pitch))
-		var target := ViewMath.to3(focus_sim) + Vector3(0.0, 0.0, float(p.focus_z))
+		var turn := Basis(Vector3.UP, ViewConfig.yaw_rad())
+		var target := ViewMath.to3(focus_sim) + turn * Vector3(0.0, 0.0, float(p.focus_z))
 		cam.fov = float(p.fov)
-		cam.position = target + Vector3(0.0, sin(pitch), cos(pitch)) * float(p.distance)
-		cam.rotation_degrees = Vector3(-float(p.pitch), 0.0, 0.0)
+		cam.position = target + turn * Vector3(0.0, sin(pitch), cos(pitch)) * float(p.distance)
+		cam.rotation_degrees = Vector3(-float(p.pitch), ViewConfig.YAW_DEG, 0.0)
 
 	func _process(delta: float) -> void:
 		if not GameState.paused:

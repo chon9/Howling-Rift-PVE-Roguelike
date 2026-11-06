@@ -2,7 +2,10 @@ class_name ViewConfig
 extends RefCounted
 ## Rift3D presentation constants and mode switches. Pure data + static helpers (no scene access).
 
-const SUN_YAW_DEG := -35.0         # compass direction of the sun (shadow cards turn to face it)
+## Compass turn of the camera around the deck: the lane climbs the screen from the blue base at the bottom left to the
+## red base at the top right, the way a MOBA lane reads. Every camera-facing card uses this same turn.
+const YAW_DEG := -45.0
+const SUN_YAW_DEG := -35.0 + YAW_DEG   # compass direction of the sun, turned with the camera so shadows keep falling back and right
 const S := 0.02                    # metres per sim px. The ground plane is never scaled.
 const UNIT_SCALE := 1.25           # champion / minion / corpse card height vs 2D art height
 const MINION_SCALE := 1.05         # minion cards (and their corpses) are drawn a little smaller, so heroes stand out
@@ -31,12 +34,6 @@ const ZOOM_EASE := 12.0
 const ZOOM_2D_REFERENCE := 1.7                  # Constants.BATTLE_CAMERA_ZOOM; other camera.zoom values scale distance
 const EDGE_PAN_SPEED_3D := 900.0                # sim px / s (2D keeps 540)
 const CAM_Y_CLAMP_3D := Vector2(180.0, 360.0)   # unlocked cam_target.y range in 3D
-## Vertical framing band of the 3D camera (CameraRig3D.follow clamps the focus with it, locked or not): the
-## near rail (sim y CAM_DECK_Y.y) stays at or below screen row CAM_FRAME.y and the far parapet (sim y
-## CAM_DECK_Y.x) at or above row CAM_FRAME.x (fractions of the screen height from the top). When both cannot
-## hold (zoomed far out) the focus centres between the two limits.
-const CAM_DECK_Y := Vector2(40.0, 482.0)
-const CAM_FRAME := Vector2(0.24, 0.74)
 
 const OVERLAY_TEXELS_PER_SIM_PX := 1.7
 ## GPU features plus two CPU levers (W3 fix: Low must buy frames, and its cost is mostly CPU side):
@@ -75,6 +72,20 @@ static func camera_preset() -> Dictionary:
 
 static func quality_settings() -> Dictionary:
 	return QUALITY.get(quality, QUALITY["high"])
+
+
+static func yaw_rad() -> float:
+	return deg_to_rad(YAW_DEG)
+
+
+## Left or right on screen for a sim direction: with the camera turned, sim x alone no longer says which (2D: sim x).
+static func screen_x(dir: Vector2) -> float:
+	return dir.rotated(yaw_rad()).x if _active else dir.x
+
+
+## Sim movement for a camera pan given in screen directions (2D: the same vector).
+static func pan_to_sim(pan: Vector2) -> Vector2:
+	return pan.rotated(-yaw_rad()) if _active else pan
 
 
 ## Card scale of a sim unit: STRUCTURE_SCALE for structures, MINION_SCALE for minions, else UNIT_SCALE.

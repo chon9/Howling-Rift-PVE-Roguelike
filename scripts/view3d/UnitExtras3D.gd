@@ -280,7 +280,7 @@ func _sync_shadow_clone(src, host) -> void:
 		clone_mat.set_shader_parameter("red_team", bool(red) if red != null else false)
 	clone_mat.set_shader_parameter("fade", CLONE_FADE * src.modulate.a)
 	shadow_clone.position = ViewMath.to3(shadow.point) + _up(host) * ViewMath.art_m(_lift(src))
-	shadow_clone.rotation = Vector3(-_pitch_rad(host), 0.0, 0.0)
+	shadow_clone.rotation = Vector3(-_pitch_rad(host), ViewConfig.yaw_rad(), 0.0)
 	shadow_clone.visible = true
 
 

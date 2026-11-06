@@ -297,8 +297,9 @@ func _test_lighting(arena: WorldBuilder3D) -> void:
 	check(compat.sun_energy < fwd.sun_energy and compat.rim_energy < fwd.rim_energy, "Compatibility profile compensates display-space lighting (dimmer sun and rim)")
 	var light := WorldBuilder3D.light_profile(RenderingServer.get_current_rendering_method())
 	check(sun.rotation_degrees.is_equal_approx(WorldBuilder3D.SUN_ROT) and is_equal_approx(sun.light_energy, light.sun_energy), "sun pose and energy (%s profile)" % RenderingServer.get_current_rendering_method())
+	check(sun.shadow_opacity <= 0.6 and sun.shadow_blur >= 2.0 and sun.rotation_degrees.x <= -60.0, "shadows stay short, soft and light")
 	check(sun.directional_shadow_mode == DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS and is_equal_approx(sun.directional_shadow_max_distance, 45.0), "sun PSSM 2 splits, 45 m")
-	check(rim.rotation_degrees.is_equal_approx(Vector3(-25, 160, 0)) and is_equal_approx(rim.light_energy, light.rim_energy) and not rim.shadow_enabled, "rim light without shadow")
+	check(rim.rotation_degrees.is_equal_approx(WorldBuilder3D.RIM_ROT) and is_equal_approx(rim.light_energy, light.rim_energy) and not rim.shadow_enabled, "rim light without shadow")
 	var e := we.environment
 	check(e.tonemap_mode == Environment.TONE_MAPPER_LINEAR and is_equal_approx(e.tonemap_exposure, 1.0), "tonemap LINEAR, exposure 1")
 	check(e.background_color.is_equal_approx(Color(0.02, 0.03, 0.06)), "background colour")
@@ -492,7 +493,7 @@ func _test_rig() -> void:
 		rig.follow(Vector2(1300, 270), Vector2.ZERO, 1.7, 1.0 / 60.0)
 	var mp: Dictionary = ViewConfig.PRESETS.mlbb
 	check(not rig.is_blending() and is_equal_approx(rig.pitch(), float(mp.pitch)) and is_equal_approx(rig.camera.fov, float(mp.fov)) and absf(rig.distance() - float(mp.distance)) < 0.01, "mlbb reached: pitch %.0f, fov %.0f, %.1f m (%.2f, %.2f, %.3f)" % [mp.pitch, mp.fov, mp.distance, rig.pitch(), rig.camera.fov, rig.distance()])
-	var focus := ViewMath.to3(Vector2(1300, 270)) + Vector3(0, 0, 0.3)
+	var focus := ViewMath.to3(Vector2(1300, 270)) + Basis(Vector3.UP, ViewConfig.yaw_rad()) * Vector3(0, 0, 0.3)
 	check(absf(rig.camera.global_position.distance_to(focus) - rig.distance()) < 1e-3, "mlbb focus offset +0.3 m")
 	# apply_preset snaps and does not fight the config (View3DTests relies on this).
 	rig.apply_preset("lol")

@@ -143,7 +143,7 @@ func _test_grounding() -> void:
 		var fp := StructureView3D.footprint_px(c[1], s.art_rect, pitch)
 		check(not v.plinth.visible, "standing structure shows no plinth: the painted base is the foundation (%s)" % tag)
 		check(is_equal_approx(v.plinth.position.z, 0.0) and is_equal_approx(v.shadow_caster.position.z, 0.0), "plinth and shadow card sit on the sim point (%s)" % tag)
-		check(s.art_rect.end.y > 0.0 and is_equal_approx(v.body.position.z, StructureView3D.card_forward_m(s.art_rect, pitch)), "card foot stands in front of the sim point (%s)" % tag)
+		check(s.art_rect.end.y > 0.0 and v.body.position.is_equal_approx(Basis(Vector3.UP, ViewConfig.yaw_rad()) * Vector3(0.0, 0.0, StructureView3D.card_forward_m(s.art_rect, pitch))), "card foot stands in front of the sim point (%s)" % tag)
 		var r: float = (v.plinth.mesh as CylinderMesh).bottom_radius
 		check(r < fp.x * ViewConfig.S and r < fp.y * ViewConfig.S, "ruin plinth stays inside the painted footprint (%s)" % tag)
 		# On screen, the card row at the sim point's height covers the sim point.
@@ -162,7 +162,7 @@ func _test_grounding() -> void:
 	var v2 := _view(s2)
 	host.pose(View3DTestKit.FOCUS_SIM, "mlbb")
 	v2.sync(0.0)
-	check(is_equal_approx(v2.body.position.z, StructureView3D.card_forward_m(s2.art_rect, host.pitch_deg())) and is_equal_approx(v2.body.rotation.x, -deg_to_rad(host.pitch_deg())), "card foot follows the camera pitch")
+	check(is_equal_approx(v2.body.position.length(), StructureView3D.card_forward_m(s2.art_rect, host.pitch_deg())) and is_equal_approx(v2.body.rotation.x, -deg_to_rad(host.pitch_deg())), "card foot follows the camera pitch")
 	host.pose(View3DTestKit.FOCUS_SIM, ViewConfig.DEFAULT_PRESET)
 	v2.free()
 	s2.free()

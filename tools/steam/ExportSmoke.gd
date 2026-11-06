@@ -186,7 +186,7 @@ func run() -> void:
  var support_art=load("res://scripts/SupportArt.gd");var support_kit_art=load("res://scripts/KitEffectArt.gd")
  for id in support_art.ROWS:check(support_kit_art.has_effect(id) and support_kit_art.region(id,3).has_area() and support_kit_art.sheet(id)!=null,"exported support spell/attack art "+id)
  check(load("res://scripts/LanSnapshot.gd").encode().champs[0].has("last_order_sequence"),"exported snapshots acknowledge predicted movement")
- check(ProjectSettings.get_setting("application/config/version")=="0.7.2","export has correct release version")
+ check(ProjectSettings.get_setting("application/config/version")=="0.7.3","export has correct release version")
  check(load("res://scripts/UnitCollision.gd")!=null and state.clamp_walkable(state.structures[0].world_pos()).distance_to(state.structures[0].world_pos())>=state.structures[0].collision_radius,"export has solid buildings")
  check(load("res://scripts/EndScreen.gd")!=null and load("res://assets/shaders/view3d/hd2d_post.gdshader")!=null and load("res://assets/shaders/view3d/card_shadow.gdshader")!=null,"export ships the result screen and HD-2D shaders")
  check(game.view3d!=null and load("res://scripts/view3d/View3D.gd")!=null,"export builds the Rift3D view by default")

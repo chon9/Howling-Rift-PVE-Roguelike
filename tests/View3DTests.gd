@@ -250,11 +250,23 @@ func _test_rig(game: Node2D, v: View3D) -> void:
 	check(absf(rig.distance() - float(preset.distance)) < 1e-3, "rig distance is the preset distance at zoom 1.7")
 	var cam := rig.camera
 	check(cam.keep_aspect == Camera3D.KEEP_HEIGHT and is_equal_approx(cam.fov, float(preset.fov)) and is_equal_approx(cam.near, 0.5) and is_equal_approx(cam.far, 250.0), "Camera3D fov/near/far/keep_aspect per contract")
-	var focus3: Vector3 = ViewMath.to3(game.camera.position - game.camera_shake_offset) + Vector3(0, 0, float(preset.focus_z))
+	var focus3: Vector3 = ViewMath.to3(game.camera.position - game.camera_shake_offset) + Basis(Vector3.UP, ViewConfig.yaw_rad()) * Vector3(0, 0, float(preset.focus_z))
 	check(cam.global_position.distance_to(focus3) - rig.distance() < 1e-3 and absf(cam.global_position.distance_to(focus3) - rig.distance()) < 1e-3, "camera sits at the preset distance from the focus")
 	check(absf(cam.global_rotation_degrees.x + float(preset.pitch)) < 1e-3, "camera pitches down by the preset pitch")
 	var centre = ViewMath.ground_hit(cam, get_viewport().get_visible_rect().get_center())
 	check(centre != null and (centre as Vector3).distance_to(focus3) < 1e-2, "screen centre looks at the focus point")
+	# The lane climbs the screen from the blue base to the red base, and screen directions map onto the sim.
+	var here: Vector2 = game.camera.position
+	var at := cam.unproject_position(ViewMath.to3(here))
+	var ahead := cam.unproject_position(ViewMath.to3(here + Vector2(200, 0))) - at
+	check(ahead.x > 0.0 and ahead.y < 0.0, "walking toward the red base goes up and right on screen (%s)" % ahead)
+	var climb := rad_to_deg(atan2(-ahead.y, ahead.x))
+	check(climb > 30.0 and climb < 50.0, "the lane runs diagonally across the screen (%.1f degrees)" % climb)
+	check(ViewConfig.screen_x(Vector2.DOWN) > 0.0 and ViewConfig.screen_x(Vector2.UP) < 0.0 and ViewConfig.screen_x(Vector2.RIGHT) > 0.0, "facing follows the screen side, not sim x")
+	var pan_up := cam.unproject_position(ViewMath.to3(here + ViewConfig.pan_to_sim(Vector2(0, -100)))) - at
+	check(pan_up.y < 0.0 and absf(pan_up.x) < 0.2 * -pan_up.y, "panning up moves the view straight up the screen (%s)" % pan_up)
+	var pan_right := cam.unproject_position(ViewMath.to3(here + ViewConfig.pan_to_sim(Vector2(100, 0)))) - at
+	check(pan_right.x > 0.0 and absf(pan_right.y) < 0.2 * pan_right.x, "panning right moves the view straight right (%s)" % pan_right)
 	# Wheel: eased, clamped to the preset range.
 	for i in 20:
 		rig.wheel(1.0)

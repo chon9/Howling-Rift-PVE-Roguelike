@@ -7,9 +7,7 @@ extends Node3D
 ## W3-POLISH: the wheel distance follows a critically damped spring (no snap at the start or the end of a
 ## zoom), and ViewConfig.preset can change mid-match: follow() notices the new value and blends pitch, FOV,
 ## focus offset and distance to the new preset over PRESET_BLEND_S. apply_preset() still snaps.
-## W3 fix: follow() clamps the focus row to a deck band computed from the frustum (ViewConfig.CAM_DECK_Y /
-## CAM_FRAME), locked or unlocked, so a hero at the south edge of the lane never pulls the deck into the top
-## half of the screen with the abyss below it. x is never clamped.
+## The whole pose is turned by ViewConfig.YAW_DEG, so the lane runs diagonally across the screen.
 
 const NEAR_M := 0.5
 const FAR_M := 250.0
@@ -58,7 +56,7 @@ func apply_preset(preset: String) -> void:
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.near = NEAR_M
 	camera.far = FAR_M
-	rotation_degrees = Vector3(-pitch(), 0.0, 0.0)
+	rotation_degrees = Vector3(-pitch(), ViewConfig.YAW_DEG, 0.0)
 
 
 ## Starts a smooth switch to another preset (runtime settings change). The wheel distance springs to the
@@ -89,11 +87,9 @@ func follow(focus_sim: Vector2, shake_sim: Vector2, zoom2d: float, delta: float)
 		_step_blend(delta)
 	_dist = clampf(_zoom_dist * ViewConfig.ZOOM_2D_REFERENCE / maxf(zoom2d, 0.05), MIN_DIST_M, MAX_DIST_M)
 	var p := deg_to_rad(pitch())
-	var band := focus_band()
-	focus_sim.y = clampf(focus_sim.y, band.x, band.y)
-	var focus := ViewMath.to3(focus_sim) + Vector3(0.0, 0.0, _focus_z)
-	position = focus + Vector3(0.0, sin(p), cos(p)) * _dist
-	rotation_degrees = Vector3(-pitch(), 0.0, 0.0)
+	var turn := Basis(Vector3.UP, ViewConfig.yaw_rad())
+	position = ViewMath.to3(focus_sim) + turn * (Vector3(0.0, 0.0, _focus_z) + Vector3(0.0, sin(p), cos(p)) * _dist)
+	rotation_degrees = Vector3(-pitch(), ViewConfig.YAW_DEG, 0.0)
 	camera.fov = _fov
 	camera.h_offset = shake_sim.x * ViewConfig.S
 	camera.v_offset = -shake_sim.y * ViewConfig.S
@@ -111,33 +107,6 @@ func wheel(notches: float) -> void:
 
 func pitch() -> float:
 	return _pitch
-
-
-## Allowed focus rows (sim y, min..max) for the current pitch, FOV, distance and focus offset: the far
-## parapet stays at or above screen row CAM_FRAME.x and the near rail at or below CAM_FRAME.y. When the
-## camera is too far out for both, the band collapses to the midpoint of the two limits.
-func focus_band() -> Vector2:
-	var deck := ViewConfig.CAM_DECK_Y
-	var frame := ViewConfig.CAM_FRAME
-	# Focus (look point minus focus offset) that puts a deck row exactly on a screen row.
-	var lo := (deck.x * ViewConfig.S - ground_offset_m(frame.x) - _focus_z) / ViewConfig.S
-	var hi := (deck.y * ViewConfig.S - ground_offset_m(frame.y) - _focus_z) / ViewConfig.S
-	if lo > hi:
-		var mid := (lo + hi) * 0.5
-		return Vector2(mid, mid)
-	return Vector2(lo, hi)
-
-
-## Ground offset (metres along +Z, south) from the look point to the ground point seen at a screen row
-## (0 top, 1 bottom) through the vertical centre line. KEEP_HEIGHT: independent of the aspect ratio.
-func ground_offset_m(row: float) -> float:
-	var p := deg_to_rad(pitch())
-	var half := deg_to_rad(_fov) * 0.5
-	var below := p - atan((1.0 - 2.0 * row) * tan(half))   # ray angle below the horizon
-	var cam_h := _dist * sin(p)
-	if below <= 0.01:
-		return -1e4                                       # at or above the horizon: far north
-	return _dist * cos(p) - cam_h / tan(below)
 
 
 func distance() -> float:

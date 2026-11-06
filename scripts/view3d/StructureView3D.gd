@@ -281,7 +281,7 @@ func sync(delta: float) -> void:
 		_occlude = move_toward(_occlude, see_target, delta * (1.0 - OCCLUDE_ALPHA) / OCCLUDE_FADE_S)
 
 	var pitch := _pitch()
-	body.rotation.x = -deg_to_rad(pitch)
+	body.rotation = Vector3(-deg_to_rad(pitch), ViewConfig.yaw_rad(), 0.0)
 	if pitch != _base_pitch:
 		_place_base(pitch)
 	_apply_card_params()
@@ -472,7 +472,7 @@ func _on_source_exiting() -> void:
 ## The card's foot follows the camera pitch so the base stays centred on the sim point.
 func _place_base(pitch: float) -> void:
 	_base_pitch = pitch
-	body.position = Vector3(0.0, 0.0, card_forward_m(_art_rect, pitch))
+	body.position = Basis(Vector3.UP, ViewConfig.yaw_rad()) * Vector3(0.0, 0.0, card_forward_m(_art_rect, pitch))
 	if plinth != null:
 		plinth.position = Vector3(0.0, plinth_height(_type) * 0.5, 0.0)
 
@@ -502,4 +502,4 @@ func _up() -> Vector3:
 	if c != null:
 		return ViewMath.card_up(c)
 	var p := deg_to_rad(float(ViewConfig.camera_preset().pitch))
-	return Vector3(0.0, cos(p), -sin(p))
+	return Basis(Vector3.UP, ViewConfig.yaw_rad()) * Vector3(0.0, cos(p), -sin(p))

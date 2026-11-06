@@ -110,17 +110,17 @@ func _test_quad_uv() -> void:
 
 
 func _test_axis() -> void:
-	var east := _spawn(hero, Vector2(1300, 270), Vector2.RIGHT, {"effect_id": "thresh_q", "damage_type": "skill"})
+	var east := _spawn(hero, Vector2(1300, 270), View3DTestKit.screen_dir(Vector2.RIGHT), {"effect_id": "thresh_q", "damage_type": "skill"})
 	var v := _view(east)
 	var d := _screen_dir(v.card.global_position, v.card.global_basis.x)
 	check(d.x > 0.0 and absf(d.y) < 0.15 * d.x, "east projectile: card +X points to screen right (%s)" % d)
 	var up := _screen_dir(v.card.global_position, v.card.global_basis.y)
 	check(up.y < 0.0 and absf(up.x) < 0.15 * -up.y, "east projectile: card +Y points screen up (%s)" % up)
-	var south := _spawn(hero, Vector2(1300, 270), Vector2.DOWN, {"effect_id": "thresh_q", "damage_type": "skill"})
+	var south := _spawn(hero, Vector2(1300, 270), View3DTestKit.screen_dir(Vector2.DOWN), {"effect_id": "thresh_q", "damage_type": "skill"})
 	var vs := _view(south)
 	var ds := _screen_dir(vs.card.global_position, vs.card.global_basis.x)
 	check(ds.y > 0.0 and absf(ds.x) < 0.15 * ds.y, "south projectile: card +X points to screen down (%s)" % ds)
-	var north := _spawn(hero, Vector2(1300, 270), Vector2.UP, {"effect_id": "thresh_q", "damage_type": "skill"})
+	var north := _spawn(hero, Vector2(1300, 270), View3DTestKit.screen_dir(Vector2.UP), {"effect_id": "thresh_q", "damage_type": "skill"})
 	var vn := _view(north)
 	var dn := _screen_dir(vn.card.global_position, vn.card.global_basis.x)
 	check(dn.y < 0.0 and absf(dn.x) < 0.15 * -dn.y, "north projectile: card +X points to screen up (%s)" % dn)

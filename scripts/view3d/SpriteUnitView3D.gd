@@ -213,7 +213,7 @@ func _sync_body() -> bool:
 	var pitch: float = _hub.frame_pitch_rad if _hub != null else _pitch_rad()
 	if pitch != _body_pitch:
 		_body_pitch = pitch
-		body.rotation = Vector3(-pitch, 0.0, 0.0)
+		body.rotation = Vector3(-pitch, ViewConfig.yaw_rad(), 0.0)
 	var src = source
 	var champion := _champion
 	var red := int(src.team) == Constants.RED and (not champion or ViewConfig.RECOLOR_RED_HEROES)
@@ -340,5 +340,5 @@ func _is_flipped() -> bool:
 		return animator.is_flipped()
 	if _is_champion():
 		var facing = source.get("facing")
-		return facing is Vector2 and facing.x < 0.0
+		return facing is Vector2 and ViewConfig.screen_x(facing) < 0.0
 	return int(source.get("facing_sign")) < 0

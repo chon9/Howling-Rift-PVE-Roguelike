@@ -81,7 +81,7 @@ func sync(_delta: float) -> void:
 		pitch = deg_to_rad(float(host.pitch_deg()))
 	if pitch != _pitch:
 		_pitch = pitch
-		body.rotation = Vector3(-pitch, 0.0, 0.0)
+		body.rotation = Vector3(-pitch, ViewConfig.yaw_rad(), 0.0)
 	dissolve = clampf((elapsed - DISSOLVE_START) / (DISSOLVE_END - DISSOLVE_START), 0.0, 1.0)
 	var fade: float = c.modulate.a
 	if fade != _fade:

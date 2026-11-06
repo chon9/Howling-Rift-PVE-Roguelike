@@ -978,19 +978,21 @@ func _simulate_step(delta: float) -> void:
 
 func _update_camera(delta: float) -> void:
 	var sp = (ViewConfig.EDGE_PAN_SPEED_3D if view3d != null else 540.0) * delta
-	var panned = false
-	if not GameState.cam_locked and Input.is_physical_key_pressed(KEY_LEFT): GameState.cam_target.x -= sp; panned = true
-	if not GameState.cam_locked and Input.is_physical_key_pressed(KEY_RIGHT): GameState.cam_target.x += sp; panned = true
-	if not GameState.cam_locked and Input.is_physical_key_pressed(KEY_UP): GameState.cam_target.y -= sp; panned = true
-	if not GameState.cam_locked and Input.is_physical_key_pressed(KEY_DOWN): GameState.cam_target.y += sp; panned = true
+	var pan = Vector2.ZERO
+	if not GameState.cam_locked and Input.is_physical_key_pressed(KEY_LEFT): pan.x -= sp
+	if not GameState.cam_locked and Input.is_physical_key_pressed(KEY_RIGHT): pan.x += sp
+	if not GameState.cam_locked and Input.is_physical_key_pressed(KEY_UP): pan.y -= sp
+	if not GameState.cam_locked and Input.is_physical_key_pressed(KEY_DOWN): pan.y += sp
 	var mp = get_viewport().get_mouse_position()
 	var vp = get_viewport().get_visible_rect().size
 	var edge = 18.0 if not GameState.cam_locked else 0.0
-	if mp.x > 0 and mp.x < edge: GameState.cam_target.x -= sp; panned = true
-	if mp.x > vp.x - edge and mp.x < vp.x: GameState.cam_target.x += sp; panned = true
-	if mp.y > 0 and mp.y < edge: GameState.cam_target.y -= sp; panned = true
-	if mp.y > vp.y - edge and mp.y < vp.y: GameState.cam_target.y += sp; panned = true
-	if panned: GameState.cam_locked = false
+	if mp.x > 0 and mp.x < edge: pan.x -= sp
+	if mp.x > vp.x - edge and mp.x < vp.x: pan.x += sp
+	if mp.y > 0 and mp.y < edge: pan.y -= sp
+	if mp.y > vp.y - edge and mp.y < vp.y: pan.y += sp
+	if pan != Vector2.ZERO:
+		GameState.cam_target += ViewConfig.pan_to_sim(pan)
+		GameState.cam_locked = false
 	if GameState.cam_locked and GameState.player != null:
 		var target = GameState.player.global_position
 		GameState.cam_target = target if GameState.cam_target.distance_to(target) > 400 else GameState.cam_target.lerp(target, 1.0 - exp(-24.0 * delta))
